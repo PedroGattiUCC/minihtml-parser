@@ -15,7 +15,11 @@ El objetivo de este proyecto es aplicar los conceptos formales de la materia par
 
 ### Alfabeto del Lenguaje ($\Sigma$)
 MiniHTML opera sobre un alfabeto de 7 símbolos terminales:
-$$\Sigma = \{ \text{<b>}, \text{<i>}, \text{<p>}, \text{</b>}, \text{</i>}, \text{</p>}, \text{TEXTO} \}$$
+$$\Sigma = \{ \lt\text{b}\gt, \lt\text{i}\gt, \lt\text{p}\gt, \lt/\text{b}\gt, \lt/\text{i}\gt, \lt/\text{p}\gt, \text{TEXTO} \}$$
+
+*   **Apertura:** `<b>`, `<i>`, `<p>`
+*   **Cierre:** `</b>`, `</i>`, `</p>`
+*   **Texto plano:** `TEXTO`
 
 ---
 

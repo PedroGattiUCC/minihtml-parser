@@ -28,14 +28,19 @@ $$G = (V, \Sigma, S, P)$$
 
 ### 2.1. Símbolos Terminales ($\Sigma$)
 Son los elementos atómicos e indivisibles que componen las cadenas del lenguaje. Conforme al alfabeto estipulado en la consigna:
-$$\Sigma = \{ \text{<b>}, \text{<i>}, \text{<p>}, \text{</b>}, \text{</i>}, \text{</p>}, \text{TEXTO} \}$$
+$$\Sigma = \{ \lt\text{b}\gt, \lt\text{i}\gt, \lt\text{p}\gt, \lt/\text{b}\gt, \lt/\text{i}\gt, \lt/\text{p}\gt, \text{TEXTO} \}$$
+
+En el código fuente de MiniHTML, estos terminales corresponden a los siguientes tokens:
+* Etiquetas de apertura: `<b>`, `<i>`, `<p>`
+* Etiquetas de cierre: `</b>`, `</i>`, `</p>`
+* Contenido textual plano: `TEXTO`
 
 ### 2.2. Variables No Terminales ($V$)
 Son los símbolos sintácticos auxiliares que estructuran las reglas de derivación:
 $$V = \{ S, E \}$$
 
-*   **$S$ (Secuencia / Contenido):** Representa una secuencia ordenada de cero o más elementos sintácticos. Modela tanto el documento completo como el contenido interno encerrado entre un par de etiquetas.
-*   **$E$ (Elemento):** Representa una unidad sintáctica indivisible dentro de la secuencia: puede ser un bloque de texto plano o una estructura completa delimitada por etiquetas de apertura y cierre.
+* **$S$ (Secuencia / Contenido):** Representa una secuencia ordenada de cero o más elementos sintácticos. Modela tanto el documento completo como el contenido interno encerrado entre un par de etiquetas.
+* **$E$ (Elemento):** Representa una unidad sintáctica indivisible dentro de la secuencia: puede ser un bloque de texto plano o una estructura completa delimitada por etiquetas de apertura y cierre.
 
 ### 2.3. Símbolo Inicial ($S$)
 Es la variable no terminal a partir de la cual se inicia toda derivación válida del lenguaje:
@@ -44,21 +49,21 @@ $$\text{Símbolo Inicial} = S$$
 ### 2.4. Reglas de Producción ($P$)
 El conjunto finito de reglas de producción está conformado por:
 
-| N° | Regla de Producción | Descripción Sintáctica |
-|:--:|:--------------------|:-----------------------|
-| **1** | $S \rightarrow E \ S$ | Descompone una secuencia en un elemento seguido por el resto de la secuencia. |
-| **2** | $S \rightarrow \lambda$ | Clausura de la secuencia (producción vacía / palabra nula $\lambda$). Permite documentos o etiquetas vacías. |
-| **3** | $E \rightarrow \text{TEXTO}$ | Un elemento puede ser texto plano sin formato. |
-| **4** | $E \rightarrow \text{<b>} \ S \ \text{</b>}$ | Un elemento de texto en negrita delimitado por sus etiquetas, conteniendo recursivamente una secuencia $S$. |
-| **5** | $E \rightarrow \text{<i>} \ S \ \text{</i>}$ | Un elemento en cursiva delimitado por sus etiquetas, conteniendo recursivamente una secuencia $S$. |
-| **6** | $E \rightarrow \text{<p>} \ S \ \text{</p>}$ | Un elemento de párrafo delimitado por sus etiquetas, conteniendo recursivamente una secuencia $S$. |
+| N° | Regla de Producción | Notación de Tokens | Descripción Sintáctica |
+|:--:|:--------------------|:-------------------|:-----------------------|
+| **1** | $S \rightarrow E \ S$ | $S \rightarrow E \ S$ | Descompone una secuencia en un elemento seguido por el resto de la secuencia. |
+| **2** | $S \rightarrow \lambda$ | $S \rightarrow \lambda$ | Clausura de la secuencia (palabra vacía $\lambda$). Permite documentos o etiquetas vacías. |
+| **3** | $E \rightarrow \text{TEXTO}$ | $E \rightarrow \text{TEXTO}$ | Un elemento puede ser texto plano sin formato. |
+| **4** | $E \rightarrow \lt\text{b}\gt \ S \ \lt/\text{b}\gt$ | $E \rightarrow \text{<b>} \ S \ \text{</b>}$ | Bloque en negrita delimitado por sus etiquetas, conteniendo recursivamente una secuencia $S$. |
+| **5** | $E \rightarrow \lt\text{i}\gt \ S \ \lt/\text{i}\gt$ | $E \rightarrow \text{<i>} \ S \ \text{</i>}$ | Bloque en cursiva delimitado por sus etiquetas, conteniendo recursivamente una secuencia $S$. |
+| **6** | $E \rightarrow \lt\text{p}\gt \ S \ \lt/\text{p}\gt$ | $E \rightarrow \text{<p>} \ S \ \text{</p>}$ | Bloque de párrafo delimitado por sus etiquetas, conteniendo recursivamente una secuencia $S$. |
 
 ---
 
 ## 3. Justificación Teórica del Diseño de la Gramática
 
 1. **Garantía del principio LIFO y Anidamiento Estricto:**  
-   En las reglas 4, 5 y 6 ($E \rightarrow \langle\text{tag}\rangle \ S \ \langle/\text{tag}\rangle$), la etiqueta de apertura y su correspondiente etiqueta de cierre son introducidas de forma simultánea en la misma producción. El contenido interno $S$ queda estrictamente encerrado en medio de ambas. Por lo tanto, cualquier etiqueta abierta dentro de $S$ debe completarse y cerrarse en su totalidad antes de que se pueda derivar el cierre de la etiqueta contenedora, satisfaciendo formalmente el comportamiento de pila LIFO.
+   En las reglas 4, 5 y 6 ($E \rightarrow \lt\text{tag}\gt \ S \ \lt/\text{tag}\gt$), la etiqueta de apertura y su correspondiente etiqueta de cierre son introducidas de forma simultánea en la misma producción. El contenido interno $S$ queda estrictamente encerrado en medio de ambas. Por lo tanto, cualquier etiqueta abierta dentro de $S$ debe completarse y cerrarse en su totalidad antes de que se pueda derivar el cierre de la etiqueta contenedora, satisfaciendo formalmente el comportamiento de pila LIFO.
 
 2. **Modularidad y Concatenación:**  
    La combinación de la regla recursiva por la derecha ($S \rightarrow E \ S$) junto con la regla base ($S \rightarrow \lambda$) permite modelar la concatenación de un número arbitrario ($k \ge 0$) de elementos contiguos al mismo nivel jerárquico (por ejemplo: texto seguido de negrita, seguido de párrafo).
@@ -81,6 +86,8 @@ Un **árbol de derivación sintáctica** (o árbol de análisis sintáctico) es 
 * Cada hoja está rotulada con un símbolo terminal de $\Sigma$ o con la palabra vacía $\lambda$.
 * El producto del árbol (leído ordenadamente de izquierda a derecha en las hojas) coincide exactamente con la cadena derivada.
 
+> **Nota de visualización:** En los diagramas de árbol se utilizan los corchetes angulares matemáticos `⟨tag⟩` y `⟨/tag⟩` para representar los tokens terminales de apertura y cierre sin colisionar con las etiquetas internas de HTML del navegador.
+
 ---
 
 ### 4.1. Análisis de la Cadena $\alpha$
@@ -95,9 +102,9 @@ graph TD
     S0 --> S1((S))
     S1 --> lam1((λ))
     
-    E1 --> p_open["&lt;p&gt;"]
+    E1 --> p_open["⟨p⟩"]
     E1 --> S2((S))
-    E1 --> p_close["&lt;/p&gt;"]
+    E1 --> p_close["⟨/p⟩"]
     
     S2 --> E2((E))
     S2 --> S3((S))
@@ -107,9 +114,9 @@ graph TD
     S3 --> E3((E))
     S3 --> S4((S))
     
-    E3 --> b_open["&lt;b&gt;"]
+    E3 --> b_open["⟨b⟩"]
     E3 --> S5((S))
-    E3 --> b_close["&lt;/b&gt;"]
+    E3 --> b_close["⟨/b⟩"]
     
     S5 --> E4((E))
     S5 --> S6((S))
@@ -124,17 +131,22 @@ graph TD
 En cada paso se reemplaza la variable no terminal situada más a la izquierda:
 
 1. $S \Rightarrow E \ S$ *(por Regla 1: $S \rightarrow E \ S$)*
-2. $\Rightarrow \text{<p>} \ S \ \text{</p>} \ S$ *(por Regla 6: $E \rightarrow \text{<p>} \ S \ \text{</p>}$)*
-3. $\Rightarrow \text{<p>} \ E \ S \ \text{</p>} \ S$ *(por Regla 1: $S \rightarrow E \ S$)*
-4. $\Rightarrow \text{<p>} \ \text{TEXTO} \ S \ \text{</p>} \ S$ *(por Regla 3: $E \rightarrow \text{TEXTO}$)*
-5. $\Rightarrow \text{<p>} \ \text{TEXTO} \ E \ S \ \text{</p>} \ S$ *(por Regla 1: $S \rightarrow E \ S$)*
-6. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ S \ \text{</b>} \ S \ \text{</p>} \ S$ *(por Regla 4: $E \rightarrow \text{<b>} \ S \ \text{</b>}$)*
-7. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ E \ S \ \text{</b>} \ S \ \text{</p>} \ S$ *(por Regla 1: $S \rightarrow E \ S$)*
-8. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ S \ \text{</b>} \ S \ \text{</p>} \ S$ *(por Regla 3: $E \rightarrow \text{TEXTO}$)*
-9. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \lambda \ \text{</b>} \ S \ \text{</p>} \ S$ *(por Regla 2: $S \rightarrow \lambda$)*
-10. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \lambda \ \text{</p>} \ S$ *(por Regla 2: $S \rightarrow \lambda$)*
-11. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{</p>} \ \lambda$ *(por Regla 2: $S \rightarrow \lambda$)*
-12. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{</p>}$ *(Cadena terminal obtenida: $\alpha$)*
+2. $\Rightarrow \lt\text{p}\gt S \lt/\text{p}\gt S$ *(por Regla 6: $E \rightarrow \lt\text{p}\gt S \lt/\text{p}\gt$)*
+3. $\Rightarrow \lt\text{p}\gt E \ S \lt/\text{p}\gt S$ *(por Regla 1: $S \rightarrow E \ S$)*
+4. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ S \lt/\text{p}\gt S$ *(por Regla 3: $E \rightarrow \text{TEXTO}$)*
+5. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ E \ S \lt/\text{p}\gt S$ *(por Regla 1: $S \rightarrow E \ S$)*
+6. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt S \lt/\text{b}\gt S \lt/\text{p}\gt S$ *(por Regla 4: $E \rightarrow \lt\text{b}\gt S \lt/\text{b}\gt$)*
+7. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt E \ S \lt/\text{b}\gt S \lt/\text{p}\gt S$ *(por Regla 1: $S \rightarrow E \ S$)*
+8. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \ S \lt/\text{b}\gt S \lt/\text{p}\gt S$ *(por Regla 3: $E \rightarrow \text{TEXTO}$)*
+9. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \ \lambda \lt/\text{b}\gt S \lt/\text{p}\gt S$ *(por Regla 2: $S \rightarrow \lambda$)*
+10. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lambda \lt/\text{p}\gt S$ *(por Regla 2: $S \rightarrow \lambda$)*
+11. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt/\text{p}\gt \lambda$ *(por Regla 2: $S \rightarrow \lambda$)*
+12. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt/\text{p}\gt$ *(Cadena terminal obtenida: $\alpha$)*
+
+Cadena final resultante:
+```html
+<p> TEXTO <b> TEXTO </b> </p>
+```
 
 ---
 
@@ -150,9 +162,9 @@ graph TD
     S0 --> S1((S))
     S1 --> lam1((λ))
     
-    E1 --> p_open["&lt;p&gt;"]
+    E1 --> p_open["⟨p⟩"]
     E1 --> S2((S))
-    E1 --> p_close["&lt;/p&gt;"]
+    E1 --> p_close["⟨/p⟩"]
     
     S2 --> E2((E))
     S2 --> S3((S))
@@ -160,9 +172,9 @@ graph TD
     
     S3 --> E3((E))
     S3 --> S4((S))
-    E3 --> b_open["&lt;b&gt;"]
+    E3 --> b_open["⟨b⟩"]
     E3 --> S5((S))
-    E3 --> b_close["&lt;/b&gt;"]
+    E3 --> b_close["⟨/b⟩"]
     S5 --> E4((E))
     S5 --> S6((S))
     E4 --> T2["TEXTO"]
@@ -170,9 +182,9 @@ graph TD
     
     S4 --> E5((E))
     S4 --> S7((S))
-    E5 --> i_open["&lt;i&gt;"]
+    E5 --> i_open["⟨i⟩"]
     E5 --> S8((S))
-    E5 --> i_close["&lt;/i&gt;"]
+    E5 --> i_close["⟨/i⟩"]
     S8 --> E6((E))
     S8 --> S9((S))
     E6 --> T3["TEXTO"]
@@ -186,22 +198,27 @@ graph TD
 La derivación comparte los primeros pasos (1 al 9) con la cadena $\alpha$. En el paso 10, en lugar de clausurar la secuencia interior de `<p>` con $\lambda$, se expande $S$ para incorporar el elemento contiguo `<i>`:
 
 1. $S \Rightarrow E \ S$ *(Regla 1)*
-2. $\Rightarrow \text{<p>} \ S \ \text{</p>} \ S$ *(Regla 6)*
-3. $\Rightarrow \text{<p>} \ E \ S \ \text{</p>} \ S$ *(Regla 1)*
-4. $\Rightarrow \text{<p>} \ \text{TEXTO} \ S \ \text{</p>} \ S$ *(Regla 3)*
-5. $\Rightarrow \text{<p>} \ \text{TEXTO} \ E \ S \ \text{</p>} \ S$ *(Regla 1)*
-6. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ S \ \text{</b>} \ S \ \text{</p>} \ S$ *(Regla 4)*
-7. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ E \ S \ \text{</b>} \ S \ \text{</p>} \ S$ *(Regla 1)*
-8. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ S \ \text{</b>} \ S \ \text{</p>} \ S$ *(Regla 3)*
-9. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \lambda \ \text{</b>} \ S \ \text{</p>} \ S$ *(Regla 2)*
-10. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ E \ S \ \text{</p>} \ S$ *(por Regla 1: $S \rightarrow E \ S$)*
-11. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{<i>} \ S \ \text{</i>} \ S \ \text{</p>} \ S$ *(por Regla 5: $E \rightarrow \text{<i>} \ S \ \text{</i>}$)*
-12. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{<i>} \ E \ S \ \text{</i>} \ S \ \text{</p>} \ S$ *(por Regla 1: $S \rightarrow E \ S$)*
-13. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{<i>} \ \text{TEXTO} \ S \ \text{</i>} \ S \ \text{</p>} \ S$ *(por Regla 3: $E \rightarrow \text{TEXTO}$)*
-14. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{<i>} \ \text{TEXTO} \ \lambda \ \text{</i>} \ S \ \text{</p>} \ S$ *(por Regla 2: $S \rightarrow \lambda$)*
-15. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{<i>} \ \text{TEXTO} \ \text{</i>} \ \lambda \ \text{</p>} \ S$ *(por Regla 2: $S \rightarrow \lambda$)*
-16. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{<i>} \ \text{TEXTO} \ \text{</i>} \ \text{</p>} \ \lambda$ *(por Regla 2: $S \rightarrow \lambda$)*
-17. $\Rightarrow \text{<p>} \ \text{TEXTO} \ \text{<b>} \ \text{TEXTO} \ \text{</b>} \ \text{<i>} \ \text{TEXTO} \ \text{</i>} \ \text{</p>}$ *(Cadena terminal obtenida: $\beta$)*
+2. $\Rightarrow \lt\text{p}\gt S \lt/\text{p}\gt S$ *(Regla 6)*
+3. $\Rightarrow \lt\text{p}\gt E \ S \lt/\text{p}\gt S$ *(Regla 1)*
+4. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ S \lt/\text{p}\gt S$ *(Regla 3)*
+5. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ E \ S \lt/\text{p}\gt S$ *(Regla 1)*
+6. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt S \lt/\text{b}\gt S \lt/\text{p}\gt S$ *(Regla 4)*
+7. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt E \ S \lt/\text{b}\gt S \lt/\text{p}\gt S$ *(Regla 1)*
+8. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \ S \lt/\text{b}\gt S \lt/\text{p}\gt S$ *(Regla 3)*
+9. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \ \lambda \lt/\text{b}\gt S \lt/\text{p}\gt S$ *(Regla 2)*
+10. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt E \ S \lt/\text{p}\gt S$ *(por Regla 1: $S \rightarrow E \ S$)*
+11. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt\text{i}\gt S \lt/\text{i}\gt S \lt/\text{p}\gt S$ *(por Regla 5: $E \rightarrow \lt\text{i}\gt S \lt/\text{i}\gt$)*
+12. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt\text{i}\gt E \ S \lt/\text{i}\gt S \lt/\text{p}\gt S$ *(por Regla 1: $S \rightarrow E \ S$)*
+13. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt\text{i}\gt \text{TEXTO} \ S \lt/\text{i}\gt S \lt/\text{p}\gt S$ *(por Regla 3: $E \rightarrow \text{TEXTO}$)*
+14. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt\text{i}\gt \text{TEXTO} \ \lambda \lt/\text{i}\gt S \lt/\text{p}\gt S$ *(por Regla 2: $S \rightarrow \lambda$)*
+15. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt\text{i}\gt \text{TEXTO} \lt/\text{i}\gt \lambda \lt/\text{p}\gt S$ *(por Regla 2: $S \rightarrow \lambda$)*
+16. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt\text{i}\gt \text{TEXTO} \lt/\text{i}\gt \lt/\text{p}\gt \lambda$ *(por Regla 2: $S \rightarrow \lambda$)*
+17. $\Rightarrow \lt\text{p}\gt \text{TEXTO} \ \lt\text{b}\gt \text{TEXTO} \lt/\text{b}\gt \lt\text{i}\gt \text{TEXTO} \lt/\text{i}\gt \lt/\text{p}\gt$ *(Cadena terminal obtenida: $\beta$)*
+
+Cadena final resultante:
+```html
+<p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>
+```
 
 ---
 
