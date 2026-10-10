@@ -2,180 +2,107 @@
 
 **Materia:** Lenguajes Formales y Autómatas (2026)  
 **Proyecto:** Analizador Sintáctico para MiniHTML  
-**Documento:** Manual Técnico de Arquitectura, Estrategias de Implementación y Guía de Uso
+**Documento:** Manual Técnico de Implementación y Correspondencia con Clases 7 y 8
 
 ---
 
-## 1. Introducción y Enfoque de Implementación
+## 1. Enfoque de Implementación y Correspondencia Teórica
 
-La consigna de la cátedra para la Fase 3 plantea dos alternativas de implementación:
-* **Opción A:** Analizador sintáctico descendente recursivo a partir de la Gramática Libre de Contexto ($G$).
-* **Opción B:** Simulador de Autómata a Pila con gestión de estructura *Stack* a partir del modelo formal ($M$).
+La consigna de la cátedra solicita implementar el reconocedor ejecutable en Python evaluando dos alternativas:
+* **Opción A (Analizador sintáctico a partir de $G$ - Clase 7):** Funciones recursivas para las variables no terminales (`parse_S()`, `parse_E()`).
+* **Opción B (Simulador de APD a partir de $M$ - Clase 8):** Procesamiento secuencial con estructura de datos tipo Pila (*Stack*), modelando la 7-upla $M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \delta)$.
 
-### Nuestra Propuesta Original: Arquitectura Dual Híbrida y Demostración de Equivalencia $L(G) = L(M)$
-En lugar de implementar únicamente una opción, desarrollamos una **arquitectura modular que implementa ambas estrategias en paralelo**:
-1. **Estrategia A (Parser Recursivo de $G$):** Mapea cada variable no terminal ($S, E$) a un procedimiento recursivo y genera el Árbol Sintáctico Concreto (AST).
-2. **Estrategia B (Simulador del APD $M$):** Ejecuta paso a paso la función de transición $\delta$, gestiona la pila de marcadores LIFO y genera la traza de configuraciones instantáneas $(q, w, \gamma)$.
-3. **Verificación de Equivalencia:** El motor unificado evalúa cualquier cadena con ambos algoritmos y comprueba formalmente que **ambos producen el mismo veredicto de pertenencia**:
-   $$w \in L(G) \iff w \in L(M)$$
-
----
-
-## 2. Arquitectura del Sistema
-
-El código fuente en `src/` fue diseñado siguiendo las mejores prácticas de ingeniería de software (modularidad, bajo acoplamiento, principio Abierto/Cerrado):
-
-```mermaid
-graph TD
-    Input["Código Fuente (MiniHTML)"] --> Lexer["Analizador Léxico (Lexer)"]
-    Lexer --> Tokens["Tokens: Token(type, value, line, col)"]
-    
-    Tokens --> Engine["Motor Unificado (MiniHTMLParser)"]
-    
-    Engine --> StratA["Estrategia A: RecursiveDescentParser (GLC)"]
-    Engine --> StratB["Estrategia B: PushdownAutomatonParser (APD)"]
-    
-    StratA --> AST["Árbol Sintáctico (DocumentNode / AST)"]
-    StratB --> Trace["Traza Instantánea (q, w, γ)"]
-    
-    AST --> Result["Resultado Consolidado (ParseResult)"]
-    Trace --> Result
-    
-    Result --> CLI["Interfaz Visual CLI (Rich Console / REPL)"]
-```
-
-### Componentes del Paquete:
-* **`src/config.py`:** Configuración declarativa del lenguaje. Permite registrar dinámicamente nuevas etiquetas en caliente (*Open-Closed Principle*).
-* **`src/tokens.py`:** Categorías léxicas (`OPEN_TAG`, `CLOSE_TAG`, `TEXT`, `EOF`) con seguimiento de línea y columna.
-* **`src/lexer.py`:** Analizador léxico robusto que soporta tanto tokens formales (`<p> TEXTO </p>`) como código HTML real con espacios (`<p>Hola mundo</p>`).
-* **`src/ast_nodes.py`:** Jerarquía de nodos del árbol sintáctico (`DocumentNode`, `ElementNode`, `TextNode`) con renderizado gráfico.
-* **`src/recursive_parser.py`:** Implementación directa de las reglas de producción de $G$.
-* **`src/pda_parser.py`:** Simulador formal del autómata a pila determinista $M$ de la Fase 2.
-* **`src/engine.py`:** Fachada de alto nivel que coordina el análisis y formatea errores con punteros visuales (`^`).
-* **`src/cli.py`:** Interfaz interactiva para la terminal con tablas coloreadas, visualización de árboles y modo REPL.
+### Diseño Limpio y sin Sobreingeniería
+Siguiendo lo visto en clase y las recomendaciones de código limpio, unificamos la implementación en un **único archivo claro y directo:** [`src/parser.py`](../src/parser.py):
+1. **Tokenizador:** Extrae las etiquetas y el texto plano mediante una expresión regular sencilla.
+2. **Clase `AutomataPilaMiniHTML` (Modelo Clase 8):** Implementa el AFPD con una lista estándar de Python como pila (`stack = ['Z0']`), ejecutando las operaciones PUSH y POP de la función $\delta$ y emitiendo la traza de configuraciones instantáneas $(q, \omega, \gamma) \vdash (q', \omega', \gamma')$.
+3. **Clase `AnalizadorRecursivoMiniHTML` (Modelo Clase 7):** Implementa las reglas de producción de la gramática $S \rightarrow E S \mid \lambda$ mediante llamadas recursivas.
+4. **Verificación de Equivalencia:** Ambas estrategias se ejecutan sobre la misma entrada para demostrar que $w \in L(G) \iff w \in L(M)$.
 
 ---
 
-## 3. Detalle de las Estrategias Implementadas
+## 2. Detalle del Código Fuente (`src/parser.py`)
 
-### 3.1. Estrategia A: Parser Descendente Recursivo (GLC)
-Mapea fielmente las producciones de la Fase 1:
-
-* **Procedimiento `parse_S()`:**
-  * Implementa las reglas $S \rightarrow E \ S \mid \lambda$.
-  * Itera consumiendo elementos $E$ mientras el token actual sea texto o una etiqueta de apertura.
-  * Si encuentra una etiqueta de cierre o fin de archivo, aplica determinísticamente la regla nula $S \rightarrow \lambda$ y retorna.
-* **Procedimiento `parse_E()`:**
-  * Si el token es texto plano, aplica $E \rightarrow \text{TEXTO}$ y genera un `TextNode`.
-  * Si es una etiqueta de apertura `<tag>`, aplica $E \rightarrow \langle\text{tag}\rangle S \langle/\text{tag}\rangle$: guarda la etiqueta, llama recursivamente a `parse_S()` para procesar el cuerpo interior, y al retornar exige que el siguiente token sea la etiqueta de cierre exacta `</tag>`.
-  * Si no coincide o falta el cierre, lanza un error sintáctico descriptivo.
-
-### 3.2. Estrategia B: Simulador del Autómata a Pila (APD)
-Mapea fielmente el modelo formal de la Fase 2:
-
-* Mantiene la pila inicializada con el fondo $[Z_0]$.
-* **Al leer apertura `<tag>`:** Ejecuta la operación **PUSH** apilando el marcador respectivo ($B, I, P$).
-* **Al leer `TEXTO`:** Ejecuta la operación **NO-OP**, dejando el tope intacto.
-* **Al leer cierre `</tag>`:** Compara el tope de la pila:
-  * Si coincide con el marcador esperado, ejecuta **POP** y continúa.
-  * Si no coincide, la transición queda indefinida ($\delta = \emptyset$) y se reporta inmediatamente un bloqueo por violación LIFO.
-* **Fin de entrada:** Si la pila contiene únicamente el marcador de fondo $[Z_0]$, realiza la transición $\lambda$ hacia el estado de aceptación $q_f$.
-
----
-
-## 4. Manejo y Diagnóstico de Errores
-
-El analizador provee mensajes de diagnóstico claros con punteros espaciales (`^`) que señalan la columna exacta del fallo, superando el criterio de evaluación de la rúbrica:
-
-### Ejemplo 1: Error de Anidamiento Cruzado (Violación LIFO)
-Entrada: `<p> <b> TEXTO </p> </b>`
-```text
-Error [Línea 1, Columna 15]: Error de anidamiento de etiquetas: Se abrió '<b>' (línea 1), pero se intentó cerrar con '</p>'.
-    <p> <b> TEXTO </p> </b>
-                  ^
-Ayuda: Cierre primero la etiqueta '<b>' antes de cerrar '</p>'.
-```
-
-### Ejemplo 2: Etiqueta de Cierre Huérfana
-Entrada: `<p> TEXTO </p> </b>`
-```text
-Error [Línea 1, Columna 16]: Etiqueta de cierre huérfana '</b>' encontrada sin etiqueta de apertura.
-    <p> TEXTO </p> </b>
-                   ^
-Ayuda: Verifique que exista un '<b>' previo que encierre este bloque.
-```
-
-### Ejemplo 3: Fin de Archivo Inesperado (Etiquetas sin cerrar)
-Entrada: `<p> <b> TEXTO`
-```text
-Error [Línea 1, Columna 16]: Error de fin de archivo: La etiqueta '<b>' abierta en línea 1 nunca fue cerrada.
-    <p> <b> TEXTO
-                  ^
-Ayuda: Asegúrese de añadir '</b>' antes del final del documento.
-```
-
----
-
-## 5. Extensibilidad en Vivo (Preparación para la Defensa Oral)
-
-La rúbrica de la cátedra indica:
-> *"Se solicitará al grupo realizar una modificación menor en el momento, sobre el código fuente (por ejemplo, incorporar una nueva etiqueta al lenguaje, agregar una regla de producción o ajustar una validación)."*
-
-Para responder a esta consigna en menos de 10 segundos durante la entrevista oral, el sistema implementa el **Patrón de Registro Declarativo**:
-
-### Opción 1: Por línea de comandos
-Basta con ejecutar el CLI con el flag `--add-tag <nombre>`:
-```bash
-python -m src.cli -t "<p>Texto <u>subrayado</u></p>" --add-tag u
-```
-El sistema registrará automáticamente `<u>` y `</u>`, le asignará el símbolo de pila `U`, y tanto el Parser Recursivo como el Autómata a Pila la aceptarán al instante.
-
-### Opción 2: En código Python
-En `src/config.py` o en cualquier script:
+### 2.1. Tokenizador / Analizador Léxico
 ```python
-config.register_tag("u", "U")  # Agrega la etiqueta <u> con símbolo de pila U
+def tokenizar(cadena: str) -> List[str]:
+    patron = re.compile(r'(</?[a-zA-Z0-9]+>|[^<]+)')
+    # Separa etiquetas <p>, <b>, etc. y clasifica el texto plano como TEXTO
 ```
+* Reconoce tanto cadenas formales (`<p> TEXTO <b> TEXTO </b> </p>`) como código HTML real (`<p>Hola <b>mundo</b></p>`).
+
+### 2.2. Simulador del AFPD (`AutomataPilaMiniHTML`)
+Traduce fielmente la 7-upla $M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \delta)$ de la Clase 8:
+* **Pila:** Se inicializa con `['Z0']`.
+* **Lectura de `TEXTO`:** Operación no-op, el tope de la pila se conserva.
+* **Lectura de `<tag>`:** Operación **PUSH**: apila el marcador ($B, I, P$) en el tope.
+* **Lectura de `</tag>`:** Operación **POP**: si el tope coincide con el marcador de la etiqueta, se desapila. Si no coincide, la función $\delta$ está indefinida, produciendo el **bloqueo y rechazo** inmediato de la cadena.
+* **Fin de lectura:** Si la pila contiene únicamente `['Z0']`, transiciona a $q_f$ y la cadena es aceptada ($w \in L(M)$).
+
+### 2.3. Analizador Descendente Recursivo (`AnalizadorRecursivoMiniHTML`)
+Traduce las producciones de la Clase 7:
+* `parse_S()`: Aplica $S \rightarrow E S$ mientras haya texto o apertura; si encuentra cierre o fin de archivo, aplica la regla nula $S \rightarrow \lambda$.
+* `parse_E()`: Aplica $E \rightarrow \text{TEXTO}$ o $E \rightarrow \langle\text{tag}\rangle S \langle/\text{tag}\rangle$, exigiendo que el cierre coincida con la apertura.
 
 ---
 
-## 6. Guía de Ejecución y Pruebas
+## 3. Manejo de Errores Sintácticos
 
-### 6.1. Ejecutar la Batería Oficial de Pruebas
-Valida las cadenas oficiales de la cátedra ($\alpha, \beta, \gamma$), casos borde y casos inválidos:
+El reconocedor clasifica la cadena como válida o inválida e indica claramente el motivo del fallo:
+
+| Error Sintáctico | Ejemplo de Entrada | Mensaje Emitido por el Programa |
+|:---|:---|:---|
+| **Violación LIFO (Anidamiento cruzado)** | `<p> <b> TEXTO </p> </b>` | `Error de anidamiento LIFO: Se leyó '</p>' pero en el tope está 'B' (etiqueta no cerrada a tiempo).` |
+| **Etiqueta huérfana de cierre** | `<p> TEXTO </p> </b>` | `Error sintáctico: Se intentó cerrar '</b>' sin apertura previa (pila vacía).` |
+| **Etiquetas sin cerrar (EOF prematuro)** | `<p> <b> TEXTO </p>` | `Error de anidamiento LIFO: Se leyó '</p>' pero en el tope está 'B'.` |
+| **Token no reconocido** | `<unk> TEXTO </unk>` | `Error léxico: El token '<unk>' no pertenece al alfabeto Σ del lenguaje.` |
+
+---
+
+## 4. Modificación en Vivo (Preparación para la Defensa Oral)
+
+La consigna estipula:
+> *"Se solicitará al grupo realizar una modificación menor en el momento, sobre el código fuente (por ejemplo, incorporar una nueva etiqueta al lenguaje)."*
+
+En nuestro código, incorporar una nueva etiqueta (por ejemplo `<u>` para texto subrayado) se realiza de forma directa en solo dos líneas:
+
+```python
+# En src/parser.py:
+automata.agregar_etiqueta("u", "U")  # Agrega <u> y </u> asociadas al marcador 'U'
+```
+O directamente editando los diccionarios en `AutomataPilaMiniHTML`:
+```python
+self.apertura_a_pila["<u>"] = "U"
+self.cierre_a_pila["</u>"] = "U"
+```
+Ambos métodos actualizan de inmediato el alfabeto de entrada $\Sigma$, el alfabeto de pila $\Gamma$ y la función de transición $\delta$, permitiendo validar cadenas como `<p> <u> TEXTO </u> </p>` en tiempo real frente al docente.
+
+---
+
+## 5. Guía de Ejecución y Pruebas
+
+El código utiliza únicamente la **librería estándar de Python 3** (sin dependencias externas requeridas).
+
+### 5.1. Ejecutar las Pruebas Oficiales
+Valida las cadenas oficiales de la cátedra ($\alpha, \beta, \gamma$), la cadena vacía y casos inválidos:
 ```bash
-python -m src.cli --test
+python src/parser.py --test
 ```
 
-### 6.2. Analizar una Cadena Directa
+### 5.2. Probar una Cadena Específica con su Traza de Pila
 ```bash
-python -m src.cli -t "<p>TEXTO <b>TEXTO</b></p>"
+python src/parser.py "<p> TEXTO <b> TEXTO </b> </p>"
 ```
-Muestra en consola:
-1. El veredicto de validez ($w \in L$).
-2. El árbol sintáctico derivado (AST).
-3. La tabla completa de transiciones de la pila en el autómata $M$.
+Muestra la traza de configuraciones instantáneas $(q, \omega, \gamma)$ paso a paso y los diagnósticos de $M$ y $G$.
 
-### 6.3. Modo Interactivo REPL (Ideal para la entrevista con el docente)
-Permite ingresar cadenas en vivo y ver el análisis al instante:
+### 5.3. Modo Interactivo en Vivo
 ```bash
-python -m src.cli
+python src/parser.py
 ```
-Comandos dentro del REPL:
-* `:tree` para activar/desactivar el árbol visual.
-* `:trace` para activar/desactivar la tabla de la pila.
-* `:tags` para listar las etiquetas activas.
-* `:salir` para terminar.
+Abre un menú interactivo en consola para ingresar cualquier cadena en tiempo real durante la entrevista oral.
 
-### 6.4. Ejecutar la Suite de Tests Unitarios Automatizados
-Suite de 13 pruebas unitarias con `unittest`:
+### 5.4. Suite de Tests Automatizados
 ```bash
 python -m unittest tests/test_parser.py
 ```
-Resultado:
-```text
-.............
-----------------------------------------------------------------------
-Ran 13 tests in 0.002s
-
-OK
-```
+Ejecuta 9 pruebas unitarias que validan todos los casos borde y la extensión en vivo.

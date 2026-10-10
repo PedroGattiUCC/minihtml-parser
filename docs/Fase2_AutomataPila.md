@@ -2,64 +2,51 @@
 
 **Materia:** Lenguajes Formales y Autómatas (2026)  
 **Proyecto:** Analizador Sintáctico para MiniHTML  
-**Documento:** Especificación Formal, Análisis Comparativo y Trazas de la Fase 2
+**Documento:** Especificación Formal del AFPD y Trazas (Basado en Clase 8)
 
 ---
 
-## 1. Análisis de Enfoques de Diseño para el Autómata a Pila
+## 1. Justificación del Modelo y Comparación Teórica (Clase 8)
 
-En la teoría de autómatas existen distintas formas de modelar un reconocedor con pila para un lenguaje independiente de contexto. Antes de definir el autómata final, evaluamos rigurosamente las alternativas posibles para fundamentar la decisión de diseño.
-
-### Alternativa 1: AP No Determinista (APND) Top-Down (Traducción directa de la GLC)
-* **Mecanismo:** La pila almacena directamente los símbolos de la gramática ($V \cup \Sigma$). Comienza con el símbolo inicial $S$ en la pila y utiliza $\lambda$-transiciones para predecir y expandir las reglas de producción ($S \rightarrow E S$, $S \rightarrow \lambda$, etc.), desapilando los terminales a medida que coinciden con la entrada.
-* **Ventajas:** Es una traducción algorítmica directa de la gramática formal $G$ de la Fase 1.
-* **Desventajas:** Es **no determinista**. Requiere adivinar si expandir $S \rightarrow E S$ o $S \rightarrow \lambda$, o implementar un motor de *backtracking*. Para la implementación ejecutable de la Fase 3, resulta ineficiente e innecesariamente complejo.
-
-### Alternativa 2: AP Determinista (APD) por Vaciado de Pila ($N(M)$)
-* **Mecanismo:** El autómata no utiliza estados de aceptación finales ($F = \emptyset$). La cadena se acepta si y solo si, al consumir toda la entrada, la pila queda completamente vacía ($\text{Pila} = \lambda$, desapilando incluso el marcador de fondo $Z_0$).
-* **Ventajas:** Modelo minimalista en cantidad de estados.
-* **Desventajas:** El desapilado prematuro de $Z_0$ ante cadenas vacías o prefijos válidos puede generar estados de bloqueo irreparables, dificultando distinguir un documento bien cerrado de un error en etapas intermedias.
-
-### Alternativa 3 (Seleccionada): AP Determinista (APD) por Estado Final con Marcador de Fondo ($L(M)$)
-* **Mecanismo:** El autómata utiliza un alfabeto de pila específico $\Gamma = \{ Z_0, B, I, P \}$. Cada etiqueta de apertura apila su marcador correspondiente; el texto plano se procesa sin alterar la pila; y cada etiqueta de cierre desapila su marcador respectivo si coincide exactamente con el tope. La cadena se acepta si se consumió toda la entrada y el autómata alcanza el estado final de aceptación $q_f$ con la pila en su configuración inicial ($Z_0$).
-* **Justificación de la elección:**
-  1. **Determinismo estricto:** Para cada par $(\text{estado}, \text{símbolo entrada}, \text{tope pila})$ existe **a lo sumo una única transición**. No requiere conjeturas ni retroceso.
-  2. **Complejidad óptima $O(n)$:** Procesa cada token en tiempo constante, siendo la base ideal para el *parser* de la Fase 3.
-  3. **Diagnóstico preciso de errores:** Permite identificar exactamente qué etiqueta falló al comparar el token de cierre con el tope de la pila.
+Como se analizó en la **Clase 8 (Autómatas a Pila y Lenguajes independientes de contexto)**:
+* Un Autómata Finito tradicional carece de memoria auxiliar. Para reconocer un Lenguaje Independiente de Contexto (LIC) como MiniHTML, se equipa al autómata con un dispositivo de memoria tipo **pila LIFO** (Clase 8, diapositiva 2).
+* **Mecanismos de aceptación (Clase 8, diapositivas 12-14):**
+  * **$L(M)$ (Aceptación por estado final):** La cadena se acepta si al procesar todos los símbolos se alcanza un estado en $F$.
+  * **$N(M)$ (Aceptación por vaciado de pila):** La cadena se acepta si la pila queda vacía tras consumir toda la entrada.
+* **Modelo seleccionado:** Diseñamos un **Autómata Finito con Pila Determinístico (AFPD)** por estado final $L(M)$ con marcador de fondo $Z_0$. Cada etiqueta de apertura apila su marcador correspondiente; el texto no altera la pila; y cada etiqueta de cierre desapila su marcador si coincide con el tope. Al consumirse la entrada con la pila en $Z_0$, el autómata transiciona espontáneamente al estado de aceptación $q_f$. Esto garantiza determinismo estricto y diagnóstico preciso de errores de anidamiento.
 
 ---
 
 ## 2. Definición Formal del Autómata a Pila ($M$)
 
-Definimos formalmente el autómata a pila determinista como la 7-tupla:
+Conforme a la definición de la **Clase 8 (diapositiva 3)**, definimos formalmente el AFPD como la 7-upla:
 
-$$M = (Q, \Sigma, \Gamma, \delta, q_0, Z_0, F)$$
+$$M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \delta)$$
 
 Donde:
 
-### 2.1. Conjunto Finito de Estados ($Q$)
-$$Q = \{ q_0, q_f \}$$
-
-* **$q_0$ (Estado de procesamiento / lectura):** Estado activo donde se leen las etiquetas, se apilan los marcadores y se emparejan los cierres. También es el estado en el que el documento está balanceado (con $Z_0$ en la pila).
-* **$q_f$ (Estado final de aceptación):** Se alcanza mediante una transición vacía ($\lambda$) desde $q_0$ únicamente si la entrada terminó y el fondo de la pila $Z_0$ está intacto (garantía de que todas las etiquetas abiertas fueron cerradas).
-
-### 2.2. Alfabeto de Entrada ($\Sigma$)
-Los 7 terminales del lenguaje MiniHTML:
+### 2.1. Alfabeto de Entrada ($\Sigma$)
+Los 7 símbolos terminales del lenguaje MiniHTML:
 $$\Sigma = \{ \langle\text{b}\rangle, \langle\text{i}\rangle, \langle\text{p}\rangle, \langle/\text{b}\rangle, \langle/\text{i}\rangle, \langle/\text{p}\rangle, \text{TEXTO} \}$$
 
-### 2.3. Alfabeto de la Pila ($\Gamma$)
+### 2.2. Alfabeto de la Pila ($\Gamma$)
+Símbolos utilizados en la cinta de memoria (pila):
 $$\Gamma = \{ Z_0, B, I, P \}$$
+* $Z_0$: Símbolo inicial de la pila (marcador de fondo).
+* $B$: Marcador de etiqueta de negrita abierta (`<b>`).
+* $I$: Marcador de etiqueta de cursiva abierta (`<i>`).
+* $P$: Marcador de etiqueta de párrafo abierta (`<p>`).
 
-* **$Z_0$:** Símbolo inicial de la pila (marcador de fondo). Indica que no hay etiquetas abiertas pendientes.
-* **$B$:** Marcador de etiqueta de negrita abierta (`<b>`).
-* **$I$:** Marcador de etiqueta de cursiva abierta (`<i>`).
-* **$P$:** Marcador de etiqueta de párrafo abierta (`<p>`).
+### 2.3. Conjunto Finito de Estados ($Q$)
+$$Q = \{ q_0, q_f \}$$
+* $q_0$: Estado inicial y de procesamiento de lectura.
+* $q_f$: Estado final de aceptación.
 
-### 2.4. Símbolo Inicial de la Pila
-$$Z_0 \in \Gamma$$
-
-### 2.5. Estado Inicial
+### 2.4. Estado Inicial ($q_0$)
 $$q_0 \in Q$$
+
+### 2.5. Símbolo Inicial de la Pila ($Z_0$)
+$$Z_0 \in \Gamma$$
 
 ### 2.6. Conjunto de Estados Finales ($F$)
 $$F = \{ q_f \}$$
@@ -68,32 +55,35 @@ $$F = \{ q_f \}$$
 
 ## 3. Función de Transición ($\delta$)
 
-La función de transición tiene la forma:
+Siguiendo la definición de la **Clase 8 (diapositiva 4)**:
 $$\delta: Q \times (\Sigma \cup \{\lambda\}) \times \Gamma \rightarrow Q \times \Gamma^*$$
 
-Convención de notación: si la pila tiene tope $X$ y se sustituye por $\alpha$:
-* $\alpha = YX$: Operación **PUSH** (apilar $Y$ sobre $X$).
-* $\alpha = X$: Operación **NO-OP** (conservar el tope $X$).
-* $\alpha = \lambda$: Operación **POP** (desapilar $X$).
+Donde $\delta(q, a, z) = (q', \gamma)$ significa que estando en el estado $q$, leyendo el símbolo $a$ y con el símbolo $z$ en el tope de la pila, el autómata transiciona al estado $q'$ y **reemplaza el tope $z$ por la cadena $\gamma$**.
+
+* Si $\gamma = Yz$: Operación **PUSH** (se apila $Y$ sobre $z$).
+* Si $\gamma = z$: Operación **NO-OP** (se conserva el tope $z$).
+* Si $\gamma = \lambda$: Operación **POP** (se desapila el tope $z$).
 
 ### Tabla Formal de Transiciones
 
-| N° | Estado Actual ($q$) | Entrada ($a$) | Tope Pila ($X$) | Siguiente Estado ($q'$) | Nueva Pila ($\alpha$) | Operación sobre la Pila |
+| N° | Estado ($q$) | Entrada ($a$) | Tope ($z$) | $\delta(q, a, z) = (q', \gamma)$ | Operación | Justificación Teórica |
 |:--:|:---:|:---:|:---:|:---:|:---:|:---|
-| **1** | $q_0$ | `TEXTO` | $X \in \{Z_0, B, I, P\}$ | $q_0$ | $X$ | **Lectura neutra:** El texto plano no altera la pila. |
-| **2** | $q_0$ | `<b>` | $X \in \{Z_0, B, I, P\}$ | $q_0$ | $BX$ | **Push:** Apila el marcador $B$ sobre el tope actual. |
-| **3** | $q_0$ | `<i>` | $X \in \{Z_0, B, I, P\}$ | $q_0$ | $IX$ | **Push:** Apila el marcador $I$ sobre el tope actual. |
-| **4** | $q_0$ | `<p>` | $X \in \{Z_0, B, I, P\}$ | $q_0$ | $PX$ | **Push:** Apila el marcador $P$ sobre el tope actual. |
-| **5** | $q_0$ | `</b>` | $B$ | $q_0$ | $\lambda$ | **Pop:** Cierre exitoso de `<b>`. Desapila $B$. |
-| **6** | $q_0$ | `</i>` | $I$ | $q_0$ | $\lambda$ | **Pop:** Cierre exitoso de `<i>`. Desapila $I$. |
-| **7** | $q_0$ | `</p>` | $P$ | $q_0$ | $\lambda$ | **Pop:** Cierre exitoso de `<p>`. Desapila $P$. |
-| **8** | $q_0$ | $\lambda$ | $Z_0$ | $q_f$ | $Z_0$ | **Aceptación:** Entrada consumida y pila balanceada. |
+| **1** | $q_0$ | `TEXTO` | $X \in \Gamma$ | $(q_0, X)$ | No-op | El texto plano no altera el anidamiento. |
+| **2** | $q_0$ | `<b>` | $X \in \Gamma$ | $(q_0, BX)$ | Push | Apila $B$ para recordar que se abrió `<b>`. |
+| **3** | $q_0$ | `<i>` | $X \in \Gamma$ | $(q_0, IX)$ | Push | Apila $I$ para recordar que se abrió `<i>`. |
+| **4** | $q_0$ | `<p>` | $X \in \Gamma$ | $(q_0, PX)$ | Push | Apila $P$ para recordar que se abrió `<p>`. |
+| **5** | $q_0$ | `</b>` | $B$ | $(q_0, \lambda)$ | Pop | Cierre correcto de `<b>`: desapila $B$. |
+| **6** | $q_0$ | `</i>` | $I$ | $(q_0, \lambda)$ | Pop | Cierre correcto de `<i>`: desapila $I$. |
+| **7** | $q_0$ | `</p>` | $P$ | $(q_0, \lambda)$ | Pop | Cierre correcto de `<p>`: desapila $P$. |
+| **8** | $q_0$ | $\lambda$ | $Z_0$ | $(q_f, Z_0)$ | Aceptación | Entrada consumida y pila en $Z_0$ $\rightarrow$ pasa a $q_f$. |
 
-> **Comportamiento ante errores:** Cualquier combinación de (entrada, tope) no listada en la tabla (por ejemplo, leer `</b>` cuando el tope es $P$ o $Z_0$) no tiene transición definida ($\delta = \emptyset$). En ese caso el autómata **se bloquea inmediatamente**, rechazando la cadena por fallo de balanceo sintáctico.
+> **Bloqueo formal:** Para cualquier combinación no listada (ejemplo: leer `</b>` con tope $P$ o $Z_0$), $\delta$ está **indefinida** ($\delta = \emptyset$), produciendo el bloqueo inmediato y el rechazo de la cadena por violación sintáctica LIFO.
 
 ---
 
-## 4. Diagrama de Transición del Autómata
+## 4. Diagrama de Transición del Autómata (Clase 8, pág. 6)
+
+Convención de rotulado: `entrada, tope_pila / nuevo_tope`
 
 ```mermaid
 stateDiagram-v2
@@ -114,116 +104,107 @@ stateDiagram-v2
 
 ---
 
-## 5. Trazas de Configuración Instantánea
+## 5. Trazas de Configuración Instantánea (Clase 8, pág. 11)
 
-Una **configuración instantánea** de un autómata a pila se denota como la terna:
-$$(q, w, \gamma)$$
-donde:
-* $q \in Q$ es el estado actual.
-* $w \in \Sigma^*$ es la cadena remanente por leer.
-* $\gamma \in \Gamma^*$ es el contenido actual de la pila, donde el **primer símbolo a la izquierda representa el tope de la pila**.
-* El símbolo $\vdash$ representa una transición de un paso, y $\vdash^*$ representa la clausura transitiva y reflexiva.
+Según la definición formal de la **Clase 8 (diapositiva 11)**, una configuración instantánea es la terna:
+$$(q, \omega, \gamma)$$
+Donde $q$ es el estado actual, $\omega$ la entrada remanente, y $\gamma$ el contenido de la pila (con el tope escrito a la izquierda: $\gamma = X\zeta$).
+Un paso de procesamiento se denota como:
+$$(q, a\omega', X\zeta) \vdash (p, \omega', \eta\zeta) \quad \text{si } \delta(q, a, X) = (p, \eta)$$
 
 ---
 
 ### 5.1. Traza para la Cadena $\alpha$
-
-* **Cadena:** $\alpha = \text{<p> TEXTO <b> TEXTO </b> </p>}$
+$$\alpha = \text{<p> TEXTO <b> TEXTO </b> </p>}$$
 
 ```text
-Paso   Configuración Instantánea                                             Transición Aplicada
+Paso   Configuración Instantánea                                             Transición Aplicada (δ)
 --------------------------------------------------------------------------------------------------------------------------
 01.    (q0,  <p> TEXTO <b> TEXTO </b> </p>,                   Z0)             Configuración inicial
-02.    |- (q0,  TEXTO <b> TEXTO </b> </p>,                   P Z0)            Regla 4: lee <p>, apila P sobre Z0
-03.    |- (q0,  <b> TEXTO </b> </p>,                         P Z0)            Regla 1: lee TEXTO, conserva P
-04.    |- (q0,  TEXTO </b> </p>,                           B P Z0)            Regla 2: lee <b>, apila B sobre P
-05.    |- (q0,  </b> </p>,                                 B P Z0)            Regla 1: lee TEXTO, conserva B
-06.    |- (q0,  </p>,                                        P Z0)            Regla 5: lee </b>, desapila B (pop)
-07.    |- (q0,  λ,                                             Z0)            Regla 7: lee </p>, desapila P (pop)
-08.    |- (qf,  λ,                                             Z0)            Regla 8: fin de entrada, pasa a estado qf
+02.    |- (q0,  TEXTO <b> TEXTO </b> </p>,                   P Z0)            Regla 4: δ(q0, <p>, Z0) = (q0, P Z0)
+03.    |- (q0,  <b> TEXTO </b> </p>,                         P Z0)            Regla 1: δ(q0, TEXTO, P) = (q0, P)
+04.    |- (q0,  TEXTO </b> </p>,                           B P Z0)            Regla 2: δ(q0, <b>, P) = (q0, B P)
+05.    |- (q0,  </b> </p>,                                 B P Z0)            Regla 1: δ(q0, TEXTO, B) = (q0, B)
+06.    |- (q0,  </p>,                                        P Z0)            Regla 5: δ(q0, </b>, B) = (q0, λ)
+07.    |- (q0,  λ,                                             Z0)            Regla 7: δ(q0, </p>, P) = (q0, λ)
+08.    |- (qf,  λ,                                             Z0)            Regla 8: δ(q0, λ, Z0) = (qf, Z0)
 --------------------------------------------------------------------------------------------------------------------------
-Resultado: Cadena ACEPTADA (qf ∈ F con entrada agotada y pila en Z0).
+Resultado: Cadena ACEPTADA (qf ∈ F, entrada consumida y pila en Z0). w ∈ L(M).
 ```
 
 ---
 
 ### 5.2. Traza para la Cadena $\beta$
-
-* **Cadena:** $\beta = \text{<p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>}$
+$$\beta = \text{<p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>}$$
 
 ```text
-Paso   Configuración Instantánea                                             Transición Aplicada
+Paso   Configuración Instantánea                                             Transición Aplicada (δ)
 --------------------------------------------------------------------------------------------------------------------------
 01.    (q0,  <p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>,    Z0)             Configuración inicial
-02.    |- (q0,  TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>,    P Z0)            Regla 4: lee <p>, apila P
-03.    |- (q0,  <b> TEXTO </b> <i> TEXTO </i> </p>,          P Z0)            Regla 1: lee TEXTO, conserva P
-04.    |- (q0,  TEXTO </b> <i> TEXTO </i> </p>,            B P Z0)            Regla 2: lee <b>, apila B
-05.    |- (q0,  </b> <i> TEXTO </i> </p>,                  B P Z0)            Regla 1: lee TEXTO, conserva B
-06.    |- (q0,  <i> TEXTO </i> </p>,                         P Z0)            Regla 5: lee </b>, desapila B (pop)
-07.    |- (q0,  TEXTO </i> </p>,                           I P Z0)            Regla 3: lee <i>, apila I
-08.    |- (q0,  </i> </p>,                                 I P Z0)            Regla 1: lee TEXTO, conserva I
-09.    |- (q0,  </p>,                                        P Z0)            Regla 6: lee </i>, desapila I (pop)
-10.    |- (q0,  λ,                                             Z0)            Regla 7: lee </p>, desapila P (pop)
-11.    |- (qf,  λ,                                             Z0)            Regla 8: fin de entrada, pasa a estado qf
+02.    |- (q0,  TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>,    P Z0)            Regla 4: δ(q0, <p>, Z0) = (q0, P Z0)
+03.    |- (q0,  <b> TEXTO </b> <i> TEXTO </i> </p>,          P Z0)            Regla 1: δ(q0, TEXTO, P) = (q0, P)
+04.    |- (q0,  TEXTO </b> <i> TEXTO </i> </p>,            B P Z0)            Regla 2: δ(q0, <b>, P) = (q0, B P)
+05.    |- (q0,  </b> <i> TEXTO </i> </p>,                  B P Z0)            Regla 1: δ(q0, TEXTO, B) = (q0, B)
+06.    |- (q0,  <i> TEXTO </i> </p>,                         P Z0)            Regla 5: δ(q0, </b>, B) = (q0, λ)
+07.    |- (q0,  TEXTO </i> </p>,                           I P Z0)            Regla 3: δ(q0, <i>, P) = (q0, I P)
+08.    |- (q0,  </i> </p>,                                 I P Z0)            Regla 1: δ(q0, TEXTO, I) = (q0, I)
+09.    |- (q0,  </p>,                                        P Z0)            Regla 6: δ(q0, </i>, I) = (q0, λ)
+10.    |- (q0,  λ,                                             Z0)            Regla 7: δ(q0, </p>, P) = (q0, λ)
+11.    |- (qf,  λ,                                             Z0)            Regla 8: δ(q0, λ, Z0) = (qf, Z0)
 --------------------------------------------------------------------------------------------------------------------------
-Resultado: Cadena ACEPTADA (qf ∈ F con entrada agotada y pila en Z0).
+Resultado: Cadena ACEPTADA (qf ∈ F, entrada consumida y pila en Z0). w ∈ L(M).
 ```
 
 ---
 
 ### 5.3. Traza para la Cadena $\gamma$
-
-* **Cadena:** $\gamma = \text{<p> TEXTO TEXTO </p> <i> TEXTO </i>}$
-* **Particularidad estructural:** Posee dos etiquetas hermanas consecutivas en el nivel raíz del documento y texto continuo dentro del párrafo.
+$$\gamma = \text{<p> TEXTO TEXTO </p> <i> TEXTO </i>}$$
 
 ```text
-Paso   Configuración Instantánea                                             Transición Aplicada
+Paso   Configuración Instantánea                                             Transición Aplicada (δ)
 --------------------------------------------------------------------------------------------------------------------------
 01.    (q0,  <p> TEXTO TEXTO </p> <i> TEXTO </i>,             Z0)             Configuración inicial
-02.    |- (q0,  TEXTO TEXTO </p> <i> TEXTO </i>,             P Z0)            Regla 4: lee <p>, apila P
-03.    |- (q0,  TEXTO </p> <i> TEXTO </i>,                   P Z0)            Regla 1: lee primer TEXTO, conserva P
-04.    |- (q0,  </p> <i> TEXTO </i>,                         P Z0)            Regla 1: lee segundo TEXTO, conserva P
-05.    |- (q0,  <i> TEXTO </i>,                                Z0)            Regla 7: lee </p>, desapila P (pila vuelve a Z0)
-06.    |- (q0,  TEXTO </i>,                                  I Z0)            Regla 3: lee <i>, apila I sobre Z0
-07.    |- (q0,  </i>,                                        I Z0)            Regla 1: lee TEXTO, conserva I
-08.    |- (q0,  λ,                                             Z0)            Regla 6: lee </i>, desapila I (pop)
-09.    |- (qf,  λ,                                             Z0)            Regla 8: fin de entrada, pasa a estado qf
+02.    |- (q0,  TEXTO TEXTO </p> <i> TEXTO </i>,             P Z0)            Regla 4: δ(q0, <p>, Z0) = (q0, P Z0)
+03.    |- (q0,  TEXTO </p> <i> TEXTO </i>,                   P Z0)            Regla 1: δ(q0, TEXTO, P) = (q0, P)
+04.    |- (q0,  </p> <i> TEXTO </i>,                         P Z0)            Regla 1: δ(q0, TEXTO, P) = (q0, P)
+05.    |- (q0,  <i> TEXTO </i>,                                Z0)            Regla 7: δ(q0, </p>, P) = (q0, λ)
+06.    |- (q0,  TEXTO </i>,                                  I Z0)            Regla 3: δ(q0, <i>, Z0) = (q0, I Z0)
+07.    |- (q0,  </i>,                                        I Z0)            Regla 1: δ(q0, TEXTO, I) = (q0, I)
+08.    |- (q0,  λ,                                             Z0)            Regla 6: δ(q0, </i>, I) = (q0, λ)
+09.    |- (qf,  λ,                                             Z0)            Regla 8: δ(q0, λ, Z0) = (qf, Z0)
 --------------------------------------------------------------------------------------------------------------------------
-Resultado: Cadena ACEPTADA (qf ∈ F con entrada agotada y pila en Z0).
+Resultado: Cadena ACEPTADA (qf ∈ F, entrada consumida y pila en Z0). w ∈ L(M).
 ```
 
 ---
 
-## 6. Demostración de Detección de Errores (Cadenas Inválidas)
-
-Para contrastar el comportamiento del autómata ante violaciones sintácticas, analizamos la cadena inválida citada en la consigna:
-
+### 5.4. Demostración de Rechazo (Cadena Inválida)
 $$\text{Inválida} = \text{<p> <b> TEXTO </p> </b>}$$
 
 ```text
 Paso   Configuración Instantánea                                             Transición Aplicada / Evento
 --------------------------------------------------------------------------------------------------------------------------
 01.    (q0,  <p> <b> TEXTO </p> </b>,                         Z0)             Configuración inicial
-02.    |- (q0,  <b> TEXTO </p> </b>,                         P Z0)            Lee <p>, apila P
-03.    |- (q0,  TEXTO </p> </b>,                           B P Z0)            Lee <b>, apila B
-04.    |- (q0,  </p> </b>,                                 B P Z0)            Lee TEXTO, conserva B
+02.    |- (q0,  <b> TEXTO </p> </b>,                         P Z0)            δ(q0, <p>, Z0) = (q0, P Z0)
+03.    |- (q0,  TEXTO </p> </b>,                           B P Z0)            δ(q0, <b>, P) = (q0, B P)
+04.    |- (q0,  </p> </b>,                                 B P Z0)            δ(q0, TEXTO, B) = (q0, B)
 05.    BLOQUEO: Se intenta leer '</p>' pero el tope de la pila es 'B'.
-       La función delta(q0, '</p>', B) está INDEFINIDA.
+       δ(q0, '</p>', B) está INDEFINIDA en el autómata.
 --------------------------------------------------------------------------------------------------------------------------
-Resultado: Cadena RECHAZADA.
-Diagnóstico formal: Error sintáctico de anidamiento. Se esperaba cerrar '<b>' (tope B), pero se recibió '</p>'.
+Resultado: Cadena RECHAZADA (w ∉ L(M)).
+Diagnóstico: Violación del principio LIFO. Se esperaba cerrar '<b>' (tope B), pero se leyó '</p>'.
 ```
 
 ---
 
-## 7. Correspondencia Formal entre la GLC ($G$) y el Autómata ($M$)
+## 6. Correspondencia Teórica entre $G$ (Clase 7) y $M$ (Clase 8)
 
-Existe una correspondencia biunívoca entre la gramática de la Fase 1 y el autómata de la Fase 2:
+Por el **Teorema de Equivalencia** (Clase 8, diapositiva 21): $L$ es LIC si y sólo si existe un autómata a pila que lo reconozca.
 
-| Concepto en Gramática Libre de Contexto ($G$) | Equivalente en Autómata a Pila ($M$) |
+| Gramática Libre de Contexto ($G$) (Clase 7) | Autómata a Pila Determinista ($M$) (Clase 8) |
 |:---|:---|
-| **Regla $E \rightarrow \langle\text{tag}\rangle S \langle/\text{tag}\rangle$** | Operación **PUSH** al leer la apertura y **POP** al leer el cierre correspondiente. |
-| **Anidamiento recursivo de $S$** | Crecimiento en profundidad de la memoria LIFO de la pila. |
-| **Producción vacía $S \rightarrow \lambda$** | Desapilado exitoso hasta alcanzar el marcador contenedor o $Z_0$. |
-| **Secuencia de elementos hermanos ($S \rightarrow E S$)** | Vaciado parcial de la pila hasta $Z_0$ y posterior apilado de la siguiente etiqueta hermana. |
-| **Cadena vacía ($\lambda \in L(G)$)** | Transición directa $(q_0, \lambda, Z_0) \vdash (q_f, \lambda, Z_0)$. |
+| Regla $E \rightarrow \langle\text{tag}\rangle S \langle/\text{tag}\rangle$ | Operación **PUSH** al leer apertura y **POP** al leer cierre |
+| Anidamiento jerárquico de $S$ | Crecimiento en profundidad de la pila LIFO ($\Gamma$) |
+| Producción vacía $S \rightarrow \lambda$ | Desapilado exitoso hasta recuperar el fondo $Z_0$ o la etiqueta padre |
+| Concatenación $S \rightarrow E S$ | Lectura secuencial de bloques hermanos en estado $q_0$ |
+| Cadena vacía $\lambda \in L(G)$ | Transición directa $(q_0, \lambda, Z_0) \vdash (q_f, \lambda, Z_0)$ |
