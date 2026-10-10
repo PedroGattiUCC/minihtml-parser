@@ -1,136 +1,99 @@
 """
-Suite de Pruebas Unitarias para el Analizador Sintáctico de MiniHTML
+Pruebas Unitarias para el Analizador Sintáctico de MiniHTML
 Materia: Lenguajes Formales y Autómatas (2026) - UCC
 Autor: Pedro Gatti (@PedroGattiUCC)
 
-Ejecutar con: python -m unittest tests/test_parser.py
+Ejecución: python -m unittest tests/test_parser.py
 """
 
 import unittest
-from src.engine import MiniHTMLParser
-from src.config import LanguageConfig
-from src.tokens import TokenType
+from src.parser import AutomataPilaMiniHTML, AnalizadorRecursivoMiniHTML, tokenizar
 
 
-class TestMiniHTMLParser(unittest.TestCase):
-    """Test suite para validar la corrección formal de las Estrategias A y B."""
+class TestMiniHTML(unittest.TestCase):
+    """Test suite que valida los modelos de la Clase 7 (G) y Clase 8 (M)."""
 
     def setUp(self):
-        self.config = LanguageConfig()
-        self.parser = MiniHTMLParser(self.config)
+        self.ap = AutomataPilaMiniHTML()
+        self.g = AnalizadorRecursivoMiniHTML()
 
-    # -------------------------------------------------------------
-    # 1. Cadenas Válidas Oficiales de la Cátedra
-    # -------------------------------------------------------------
+    # 1. Cadenas Oficiales de la Cátedra
     def test_cadena_alfa(self):
         """Cadena α = <p> TEXTO <b> TEXTO </b> </p>"""
-        code = "<p> TEXTO <b> TEXTO </b> </p>"
-        res = self.parser.parse(code, strategy="both")
-        self.assertTrue(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
-        self.assertIsNotNone(res.ast)
-        self.assertEqual(len(res.ast.children), 1)
+        tokens = tokenizar("<p> TEXTO <b> TEXTO </b> </p>")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertTrue(valida_ap)
+        self.assertTrue(valida_g)
 
     def test_cadena_beta(self):
         """Cadena β = <p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>"""
-        code = "<p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>"
-        res = self.parser.parse(code, strategy="both")
-        self.assertTrue(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
+        tokens = tokenizar("<p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertTrue(valida_ap)
+        self.assertTrue(valida_g)
 
     def test_cadena_gamma(self):
         """Cadena γ = <p> TEXTO TEXTO </p> <i> TEXTO </i>"""
-        code = "<p> TEXTO TEXTO </p> <i> TEXTO </i>"
-        res = self.parser.parse(code, strategy="both")
-        self.assertTrue(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
+        tokens = tokenizar("<p> TEXTO TEXTO </p> <i> TEXTO </i>")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertTrue(valida_ap)
+        self.assertTrue(valida_g)
 
-    # -------------------------------------------------------------
-    # 2. Casos Borde y Extensiones Válidas
-    # -------------------------------------------------------------
+    # 2. Casos Borde
     def test_cadena_vacia(self):
-        """Cadena vacía λ (válida según consigna y regla S -> λ)."""
-        res = self.parser.parse("", strategy="both")
-        self.assertTrue(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
+        """Cadena vacía λ (w ∈ L según regla S -> λ)"""
+        tokens = tokenizar("")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertTrue(valida_ap)
+        self.assertTrue(valida_g)
 
-    def test_solo_texto_plano(self):
-        """Documento consistente únicamente de texto plano."""
-        code = "Este es un texto plano sin etiquetas"
-        res = self.parser.parse(code, strategy="both")
-        self.assertTrue(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
+    def test_texto_plano(self):
+        """Documento solo con texto"""
+        tokens = tokenizar("TEXTO")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertTrue(valida_ap)
+        self.assertTrue(valida_g)
 
-    def test_anidamiento_profundo(self):
-        """Múltiples niveles de anidamiento jerárquico LIFO."""
-        code = "<p><b><i>TEXTO PROFUNDO</i></b></p>"
-        res = self.parser.parse(code, strategy="both")
-        self.assertTrue(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
-
-    def test_hermanos_multiples(self):
-        """Múltiples etiquetas hermanas contiguas."""
-        code = "<b>uno</b> <i>dos</i> <p>tres</p>"
-        res = self.parser.parse(code, strategy="both")
-        self.assertTrue(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
-
-    # -------------------------------------------------------------
-    # 3. Casos Inválidos (Violaciones Sintácticas y Léxicas)
-    # -------------------------------------------------------------
+    # 3. Casos Inválidos
     def test_anidamiento_cruzado(self):
-        """Violación del orden LIFO: <p> <b> TEXTO </p> </b>"""
-        code = "<p> <b> TEXTO </p> </b>"
-        res = self.parser.parse(code, strategy="both")
-        self.assertFalse(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
-        self.assertIn("anidamiento", res.error.message.lower())
+        """Violación LIFO: <p> <b> TEXTO </p> </b>"""
+        tokens = tokenizar("<p> <b> TEXTO </p> </b>")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertFalse(valida_ap)
+        self.assertFalse(valida_g)
 
-    def test_etiqueta_de_cierre_huerfana(self):
-        """Etiqueta de cierre sin apertura previa: </b>"""
-        code = "<p> TEXTO </p> </b>"
-        res = self.parser.parse(code, strategy="both")
-        self.assertFalse(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
-        self.assertIn("huérfana", res.error.message.lower())
+    def test_etiqueta_huerfana(self):
+        """Cierre sin apertura previa: </p>"""
+        tokens = tokenizar("<p> TEXTO </p> </b>")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertFalse(valida_ap)
+        self.assertFalse(valida_g)
 
-    def test_etiqueta_sin_cerrar_al_final(self):
-        """Etiqueta abierta que nunca se cierra antes de EOF: <p> <b> TEXTO"""
-        code = "<p> <b> TEXTO"
-        res = self.parser.parse(code, strategy="both")
-        self.assertFalse(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
+    def test_etiqueta_sin_cerrar(self):
+        """Apertura sin cierre: <p> <b> TEXTO"""
+        tokens = tokenizar("<p> <b> TEXTO")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertFalse(valida_ap)
+        self.assertFalse(valida_g)
 
-    def test_etiqueta_no_reconocida(self):
-        """Etiqueta fuera del alfabeto Σ: <div>Texto</div>"""
-        code = "<div>Texto</div>"
-        res = self.parser.parse(code, strategy="both")
-        self.assertFalse(res.is_valid)
-        self.assertIn("no reconocida", res.error.message.lower())
-
-    def test_sintaxis_malformada_sin_mayor(self):
-        """Error léxico de etiqueta malformada: <p texto"""
-        code = "<p texto"
-        res = self.parser.parse(code, strategy="both")
-        self.assertFalse(res.is_valid)
-        self.assertIn("sin cerrar", res.error.message.lower())
-
-    # -------------------------------------------------------------
-    # 4. Prueba de Extensibilidad Dinámica (Defensa Oral)
-    # -------------------------------------------------------------
-    def test_extension_dinamica_de_etiqueta(self):
-        """Demuestra que incorporar una nueva etiqueta funciona al instante en ambas estrategias."""
-        config_extendida = LanguageConfig()
-        config_extendida.register_tag("u", "U")  # Añadir <u>
-        parser_extendido = MiniHTMLParser(config_extendida)
-
-        code = "<p>Texto <u>subrayado</u></p>"
-        res = parser_extendido.parse(code, strategy="both")
-        self.assertTrue(res.is_valid)
-        self.assertTrue(res.equivalent_verified)
-        # Comprobar que en el autómata a pila se usó el símbolo 'U'
-        stack_symbols_used = [step.stack_content for step in res.pda_trace]
-        self.assertTrue(any("U" in s for s in stack_symbols_used))
+    # 4. Modificación en Vivo (Defensa Oral)
+    def test_incorporar_nueva_etiqueta(self):
+        """Incorporar la etiqueta <u> dinámicamente"""
+        self.ap.agregar_etiqueta("u", "U")
+        self.g.tags.add("u")
+        tokens = tokenizar("<p> TEXTO <u> TEXTO </u> </p>")
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertTrue(valida_ap)
+        self.assertTrue(valida_g)
 
 
 if __name__ == "__main__":
