@@ -4,65 +4,88 @@ Materia: Lenguajes Formales y Autómatas - UCC
 Basado en los contenidos teóricos de la Clase 7 (GIC) y Clase 8 (Autómatas a Pila).
 
 Este módulo implementa el Analizador Sintáctico de MiniHTML mediante dos estrategias:
-1. Autómata Finito con Pila Determinístico (AFPD) según la definición de la Clase 8:
-   M = (Σ, Γ, Q, q0, Z0, F, δ)
+1. Autómata Finito con Pila No Determinista con transiciones λ (AFPN-λ) según la
+   definición de la Clase 8: M = (Σ, Γ, Q, q0, Z0, F, Δ)
 2. Analizador Descendente Recursivo directo de la Gramática Libre de Contexto (G).
 """
 
-import sys
 import re
-from typing import List, Tuple, Optional
+import sys
+from typing import Dict, List, Optional, Set, Tuple
 
 # Configuración de salida segura UTF-8 en consola
-if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+_reconfigurar = getattr(sys.stdout, "reconfigure", None)
+if callable(_reconfigurar) and (sys.stdout.encoding or "").lower() != "utf-8":
     try:
-        sys.stdout.reconfigure(encoding="utf-8")
+        _reconfigurar(encoding="utf-8")
     except Exception:
         pass
+
+
+# ==============================================================================
+# 0. DEFINICIÓN DE LAS ETIQUETAS DEL LENGUAJE
+# ==============================================================================
+
+# Etiqueta -> símbolo de pila (Γ). Es la única fuente de verdad del lenguaje:
+# el autómata M y la gramática G construyen sus alfabetos a partir de este diccionario.
+# Para incorporar una etiqueta nueva (ej: <u>) basta con agregar "u": "U".
+ETIQUETAS: Dict[str, str] = {
+    "b": "B",
+    "i": "I",
+    "p": "P",
+}
 
 
 # ==============================================================================
 # 1. TOKENIZADOR / ANALIZADOR LÉXICO
 # ==============================================================================
 
+# Separa todo lo que empieza con "<" (hasta el ">" o el próximo "<") del texto plano
+PATRON_TOKEN = re.compile(r'<[^<>]*>?|[^<]+')
+# Etiqueta bien formada: <x> o </x> (se admite <\x> como notación alternativa de cierre)
+PATRON_ETIQUETA = re.compile(r'<([/\\]?)([a-zA-Z0-9]+)>')
+
+
 def tokenizar(cadena: str) -> List[str]:
     """
     Divide la cadena de entrada en una lista de tokens reconocibles:
     Etiquetas: <b>, <i>, <p>, </b>, </i>, </p>
     Texto: fragmentos de texto plano (representados por el token TEXTO)
+    Cualquier etiqueta mal formada (ej: "<b", "< b >", "<p class=x>") se conserva
+    tal cual, para que el analizador la rechace como error léxico.
     """
-    # Expresión regular que separa etiquetas <...> del resto del texto
-    patron = re.compile(r'(</?[a-zA-Z0-9]+>|[^<]+)')
-    tokens = []
+    tokens: List[str] = []
 
-    for coincidencia in patron.finditer(cadena):
+    for coincidencia in PATRON_TOKEN.finditer(cadena):
         trozo = coincidencia.group().strip()
         if not trozo:
             continue
 
-        if trozo.startswith("<") and trozo.endswith(">"):
-            tokens.append(trozo.lower())
+        if trozo.startswith("<"):
+            etiqueta = PATRON_ETIQUETA.fullmatch(trozo)
+            if etiqueta:
+                barra = "/" if etiqueta.group(1) else ""
+                tokens.append(f"<{barra}{etiqueta.group(2).lower()}>")
+            else:
+                tokens.append(trozo)
         else:
-            # Si el texto es la palabra genérica "TEXTO", la guardamos tal cual
-            # Si es texto real (ej: "Hola mundo"), se normaliza como "TEXTO"
-            # permitiendo reconocer tanto la teoría como código HTML real
-            palabras = trozo.split()
-            for _ in palabras:
-                tokens.append("TEXTO")
+            # Cada palabra de texto (ya sea la palabra genérica "TEXTO" o texto real
+            # como "Hola mundo") se normaliza como un token TEXTO
+            tokens.extend("TEXTO" for _ in trozo.split())
 
     return tokens
 
 
 # ==============================================================================
-# 2. AUTÓMATA A PILA DETERMINISTA (AFPD) - MODELO CLASE 8
+# 2. AUTÓMATA A PILA NO DETERMINISTA CON TRANSICIONES λ (AFPN-λ) - CLASE 8
 # ==============================================================================
 
 class AutomataPilaMiniHTML:
     """
-    Implementación del Autómata Finito con Pila Determinístico (AFPD)
-    Definido formalmente como la 7-upla (Clase 8, diapositiva 3):
-      M = (Σ, Γ, Q, q0, Z0, F, δ)
-    
+    Implementación del Autómata Finito con Pila No Determinista con transiciones λ
+    (AFPN-λ), definido formalmente como la 7-upla (Clase 8, diapositivas 7-10):
+      M = (Σ, Γ, Q, q0, Z0, F, Δ)
+
     Donde:
       Σ = { <b>, <i>, <p>, </b>, </i>, </p>, TEXTO }
       Γ = { Z0, B, I, P }
@@ -70,34 +93,31 @@ class AutomataPilaMiniHTML:
       q0: Estado inicial
       Z0: Marcador de fondo de pila
       F = { qf }: Estado de aceptación final
-      δ: Función de transición
+      Δ: Q × (Σ ∪ {λ}) × Γ -> P(Q × Γ*)
+
+    El único punto de no determinismo es la transición espontánea Δ(q0, λ, Z0) = {(qf, Z0)},
+    que coexiste con las transiciones de lectura desde q0 con tope Z0.
     """
 
     def __init__(self):
         # Alfabetos y estados según Clase 8
-        self.sigma = {"<b>", "<i>", "<p>", "</b>", "</i>", "</p>", "TEXTO"}
-        self.gamma = {"Z0", "B", "I", "P"}
-        self.estados = {"q0", "qf"}
+        self.gamma: Set[str] = {"Z0"}
+        self.sigma: Set[str] = {"TEXTO"}
+        self.estados: Set[str] = {"q0", "qf"}
         self.q0 = "q0"
         self.z0 = "Z0"
-        self.f = {"qf"}
+        self.f: Set[str] = {"qf"}
 
-        # Mapeo de etiquetas a símbolos de la pila (Fácilmente extensible)
-        self.apertura_a_pila = {
-            "<b>": "B",
-            "<i>": "I",
-            "<p>": "P"
-        }
-        self.cierre_a_pila = {
-            "</b>": "B",
-            "</i>": "I",
-            "</p>": "P"
-        }
+        # Mapeo de etiquetas a símbolos de la pila (construido desde ETIQUETAS)
+        self.apertura_a_pila: Dict[str, str] = {}
+        self.cierre_a_pila: Dict[str, str] = {}
+        for etiqueta, simbolo in ETIQUETAS.items():
+            self.agregar_etiqueta(etiqueta, simbolo)
 
-    def agregar_etiqueta(self, etiqueta: str, simbolo_pila: str = None):
+    def agregar_etiqueta(self, etiqueta: str, simbolo_pila: Optional[str] = None):
         """
-        Permite incorporar una nueva etiqueta al lenguaje en tiempo de ejecución
-        (útil ante pedidos del docente durante la defensa oral).
+        Incorpora una etiqueta al lenguaje: agrega <tag> y </tag> a Σ, su símbolo a Γ
+        y las transiciones de PUSH/POP correspondientes a Δ.
         Ejemplo: automata.agregar_etiqueta("u", "U") para <u> y </u>
         """
         tag = etiqueta.lower().strip("<>/ ")
@@ -110,83 +130,91 @@ class AutomataPilaMiniHTML:
 
     def simular(self, tokens: List[str], imprimir_traza: bool = True) -> Tuple[bool, str, List[str]]:
         """
-        Procesa la secuencia de tokens aplicando la función de transición δ.
+        Procesa la secuencia de tokens aplicando la función de transición Δ.
         Registra cada paso como una configuración instantánea (q, ω, γ) (Clase 8, pág. 11).
         Devuelve: (es_valida, mensaje_diagnostico, traza_pasos)
         """
         estado = self.q0
         pila = [self.z0]  # El último elemento representa el tope de la pila
-        traza = []
+        traza: List[str] = []
 
-        def obtener_traza_paso(idx: int, accion: str) -> str:
+        def configuracion(idx: int) -> str:
+            # (q, ω, γ): estado actual, entrada aún no leída y pila con el tope a la izquierda
             remanente = " ".join(tokens[idx:]) if idx < len(tokens) else "λ"
-            # En la notación formal (Clase 8), el tope se escribe a la izquierda:
-            pila_str = " ".join(reversed(pila))
-            return f"({estado}, {remanente:<40}, {pila_str:>10})  |-  {accion}"
+            return f"({estado}, {remanente}, {' '.join(reversed(pila))})"
 
-        traza.append(f"Configuración inicial: ({estado}, {' '.join(tokens) if tokens else 'λ'}, {pila[0]})")
+        def registrar(prefijo: str, idx: int, detalle: str):
+            traza.append(f"{prefijo:<3}{configuracion(idx):<60}  {detalle}")
+
+        def finalizar(valida: bool, mensaje: str) -> Tuple[bool, str, List[str]]:
+            if imprimir_traza:
+                self._imprimir_traza_consola(traza)
+            return valida, mensaje, traza
+
+        registrar("", 0, "Configuración inicial")
 
         for idx, token in enumerate(tokens):
             tope = pila[-1]
 
-            # 1. Lectura de TEXTO: δ(q0, TEXTO, X) = (q0, X) (No altera la pila)
+            # 1. Lectura de TEXTO: Δ(q0, TEXTO, X) = {(q0, X)} (No altera la pila)
             if token == "TEXTO":
-                traza.append(obtener_traza_paso(idx, f"Lee TEXTO, conserva tope '{tope}'"))
+                registrar("|-", idx + 1, f"Δ({estado}, TEXTO, {tope}) = {{({estado}, {tope})}}")
 
-            # 2. Apertura: δ(q0, <tag>, X) = (q0, Y X) (PUSH)
+            # 2. Apertura: Δ(q0, <tag>, X) = {(q0, Y X)} (PUSH)
             elif token in self.apertura_a_pila:
                 marcador = self.apertura_a_pila[token]
                 pila.append(marcador)
-                traza.append(obtener_traza_paso(idx, f"Lee {token}, PUSH '{marcador}'"))
+                registrar("|-", idx + 1, f"Δ({estado}, {token}, {tope}) = {{({estado}, {marcador} {tope})}}  PUSH")
 
-            # 3. Cierre: δ(q0, </tag>, Y) = (q0, λ) (POP)
+            # 3. Cierre: Δ(q0, </tag>, Y) = {(q0, λ)} (POP)
             elif token in self.cierre_a_pila:
                 esperado = self.cierre_a_pila[token]
                 if tope == esperado:
                     pila.pop()
-                    traza.append(obtener_traza_paso(idx, f"Lee {token}, POP '{esperado}' (cierre correcto)"))
+                    registrar("|-", idx + 1, f"Δ({estado}, {token}, {tope}) = {{({estado}, λ)}}  POP")
                 else:
                     if tope == self.z0:
                         msg = f"Error sintáctico: Se intentó cerrar '{token}' sin apertura previa (pila vacía)."
                     else:
                         msg = (f"Error de anidamiento LIFO: Se leyó '{token}' pero en el tope está '{tope}' "
-                               f"(etiqueta no cerrada a tiempo).")
-                    traza.append(obtener_traza_paso(idx, f"BLOQUEO: δ({estado}, {token}, {tope}) INDEFINIDA. {msg}"))
-                    if imprimir_traza:
-                        self._imprimir_traza_consola(traza)
-                    return False, msg, traza
+                               f"(se esperaba cerrar '{self._etiqueta_de(tope)}' primero).")
+                    traza.append(f"BLOQUEO: Δ({estado}, {token}, {tope}) = ∅. {msg}")
+                    return finalizar(False, msg)
 
             # 4. Token no reconocido (fuera del alfabeto Σ)
             else:
                 msg = f"Error léxico: El token '{token}' no pertenece al alfabeto Σ del lenguaje."
-                traza.append(obtener_traza_paso(idx, f"BLOQUEO: Token inválido. {msg}"))
-                if imprimir_traza:
-                    self._imprimir_traza_consola(traza)
-                return False, msg, traza
+                traza.append(f"BLOQUEO: Δ({estado}, {token}, {tope}) = ∅. {msg}")
+                return finalizar(False, msg)
 
-        # Fin de la entrada: transición λ al estado final qf si la pila volvió a Z0
+        # Transición espontánea Δ(q0, λ, Z0) = {(qf, Z0)}. Aunque está disponible cada vez
+        # que la pila vuelve a Z0, la única rama que puede aceptar es la que la toma con la
+        # entrada ya consumida (desde qf no hay transiciones), así que el simulador sigue esa rama.
         if pila == [self.z0]:
             estado = "qf"
-            traza.append(obtener_traza_paso(len(tokens), "Fin de entrada con pila en Z0 -> Transición λ a estado final qf"))
-            if imprimir_traza:
-                self._imprimir_traza_consola(traza)
-            return True, "Cadena VÁLIDA: procesada exitosamente por el autómata (w ∈ L(M)).", traza
-        else:
-            pendientes = list(reversed(pila[:-1]))
-            msg = f"Error sintáctico: Fin de archivo alcanzado con etiquetas sin cerrar en la pila: {pendientes}."
-            traza.append(obtener_traza_paso(len(tokens), f"BLOQUEO: Pila con marcadores pendientes. {msg}"))
-            if imprimir_traza:
-                self._imprimir_traza_consola(traza)
-            return False, msg, traza
+            registrar("|-", len(tokens), f"Δ(q0, λ, {self.z0}) = {{(qf, {self.z0})}}  Aceptación")
+            return finalizar(True, "Cadena VÁLIDA: procesada exitosamente por el autómata (w ∈ L(M)).")
+
+        pendientes = ", ".join(self._etiqueta_de(simbolo) for simbolo in reversed(pila[1:]))
+        msg = f"Error sintáctico: Fin de la entrada con etiquetas sin cerrar (del tope al fondo): {pendientes}."
+        traza.append(f"BLOQUEO: Δ({estado}, λ, {pila[-1]}) = ∅. {msg}")
+        return finalizar(False, msg)
+
+    def _etiqueta_de(self, simbolo: str) -> str:
+        """Devuelve la etiqueta de apertura asociada a un símbolo de pila (ej: 'B' -> '<b>')."""
+        for etiqueta, marcador in self.apertura_a_pila.items():
+            if marcador == simbolo:
+                return etiqueta
+        return simbolo
 
     def _imprimir_traza_consola(self, traza: List[str]):
         """Imprime la traza de pasos en formato tabular claro."""
-        print("\n" + "=" * 90)
-        print("TRAZA DE CONFIGURACIONES INSTANTÁNEAS (AFPD M - Clase 8)")
-        print("=" * 90)
+        print("\n" + "=" * 110)
+        print("TRAZA DE CONFIGURACIONES INSTANTÁNEAS (AFPN-λ M - Clase 8)")
+        print("=" * 110)
         for paso in traza:
             print(f"  {paso}")
-        print("=" * 90)
+        print("=" * 110)
 
 
 # ==============================================================================
@@ -200,53 +228,46 @@ class AnalizadorRecursivoMiniHTML:
       E -> TEXTO | <b> S </b> | <i> S </i> | <p> S </p>
     """
 
-    def __init__(self, etiquetas_permitidas=None):
-        self.tags = etiquetas_permitidas if etiquetas_permitidas else {"b", "i", "p"}
+    def __init__(self, etiquetas_permitidas: Optional[Set[str]] = None):
+        self.tags: Set[str] = set(etiquetas_permitidas) if etiquetas_permitidas else set(ETIQUETAS)
 
     def validar(self, tokens: List[str]) -> Tuple[bool, str]:
         """Verifica recursivamente si la secuencia de tokens pertenece a L(G)."""
         pos = 0
 
+        def es_cierre(tok: str) -> bool:
+            return tok.startswith("</") and tok[2:-1] in self.tags
+
         def parse_S() -> None:
             nonlocal pos
-            while pos < len(tokens):
-                tok = tokens[pos]
-                # Si encontramos un cierre o fin de tokens, aplicamos S -> λ
-                if tok.startswith("</"):
-                    break
-                # Si es apertura o texto, aplicamos S -> E S
+            # S -> E S se aplica mientras haya texto o apertura (la recursión por la
+            # derecha se resuelve como iteración); ante un cierre o fin de tokens, S -> λ
+            while pos < len(tokens) and not es_cierre(tokens[pos]):
                 parse_E()
 
         def parse_E() -> None:
             nonlocal pos
-            if pos >= len(tokens):
-                raise ValueError("Fin inesperado de la entrada.")
-
             tok = tokens[pos]
 
             if tok == "TEXTO":
                 pos += 1  # E -> TEXTO
-            elif tok.startswith("<") and not tok.startswith("</"):
-                nombre_tag = tok.strip("<>/")
-                if nombre_tag not in self.tags:
-                    raise ValueError(f"Etiqueta <{nombre_tag}> no permitida en la gramática.")
-                pos += 1  # Consumir apertura
+                return
 
-                # Procesar contenido interno S
-                parse_S()
+            nombre_tag = tok[1:-1]
+            if not (tok.startswith("<") and tok.endswith(">") and nombre_tag in self.tags):
+                raise ValueError(f"Error léxico: el token '{tok}' no es un terminal de la gramática.")
+            pos += 1  # Consumir apertura
 
-                # Verificar y consumir cierre correspondiente
-                if pos >= len(tokens):
-                    raise ValueError(f"La etiqueta <{nombre_tag}> nunca fue cerrada (fin de archivo).")
+            # Procesar contenido interno S
+            parse_S()
 
-                cierre_tok = tokens[pos]
-                esperado = f"</{nombre_tag}>"
-                if cierre_tok != esperado:
-                    raise ValueError(f"Error de anidamiento: se esperaba '{esperado}', pero se encontró '{cierre_tok}'.")
-
-                pos += 1  # Consumir cierre
-            else:
-                raise ValueError(f"Token inesperado '{tok}'.")
+            # Verificar y consumir cierre correspondiente
+            esperado = f"</{nombre_tag}>"
+            if pos >= len(tokens):
+                raise ValueError(f"La etiqueta <{nombre_tag}> nunca fue cerrada (fin de la entrada).")
+            if tokens[pos] != esperado:
+                raise ValueError(f"Error de anidamiento: se esperaba '{esperado}', pero se encontró '{tokens[pos]}'.")
+            pos += 1  # Consumir cierre
 
         try:
             parse_S()
@@ -255,6 +276,8 @@ class AnalizadorRecursivoMiniHTML:
             return True, "Cadena VÁLIDA: generada por la gramática (w ∈ L(G))."
         except ValueError as err:
             return False, f"Error sintáctico en G: {err}"
+        except RecursionError:
+            return False, "Error en G: anidamiento demasiado profundo para el analizador recursivo."
 
 
 # ==============================================================================
@@ -295,7 +318,8 @@ def ejecutar_casos_oficiales():
         ("Cadena vacía (λ)", ""),
         ("Cadena Inválida 1 (Anidamiento cruzado)", "<p> <b> TEXTO </p> </b>"),
         ("Cadena Inválida 2 (Etiqueta huérfana)", "<p> TEXTO </p> </b>"),
-        ("Cadena Inválida 3 (Sin cerrar al final)", "<p> <b> TEXTO </p>")
+        ("Cadena Inválida 3 (Sin cerrar al final)", "<p> <b> TEXTO </b>"),
+        ("Cadena Inválida 4 (Etiqueta mal formada)", "<p> TEXTO <b </p>")
     ]
 
     for nombre, texto in casos:

@@ -2,7 +2,7 @@
 
 **Materia:** Lenguajes Formales y Autómatas (2026)  
 **Proyecto:** Analizador Sintáctico para MiniHTML  
-**Documento:** Especificación Formal del AFPD y Trazas (Basado en Clase 8)
+**Documento:** Especificación Formal del AFPN-λ y Trazas (Basado en Clase 8)
 
 ---
 
@@ -13,15 +13,17 @@ Como se analizó en la **Clase 8 (Autómatas a Pila y Lenguajes independientes d
 * **Mecanismos de aceptación (Clase 8, diapositivas 12-14):**
   * **$L(M)$ (Aceptación por estado final):** La cadena se acepta si al procesar todos los símbolos se alcanza un estado en $F$.
   * **$N(M)$ (Aceptación por vaciado de pila):** La cadena se acepta si la pila queda vacía tras consumir toda la entrada.
-* **Modelo seleccionado:** Diseñamos un **Autómata Finito con Pila Determinístico (AFPD)** por estado final $L(M)$ con marcador de fondo $Z_0$. Cada etiqueta de apertura apila su marcador correspondiente; el texto no altera la pila; y cada etiqueta de cierre desapila su marcador si coincide con el tope. Al consumirse la entrada con la pila en $Z_0$, el autómata transiciona espontáneamente al estado de aceptación $q_f$. Esto garantiza determinismo estricto y diagnóstico preciso de errores de anidamiento.
+* **Modelo seleccionado:** Diseñamos un **Autómata Finito con Pila No Determinista con transiciones espontáneas (AFPN-$\lambda$)** por estado final $L(M)$ con marcador de fondo $Z_0$ (Clase 8, diapositivas 7-10; la consigna admite APD o APND). Cada etiqueta de apertura apila su marcador correspondiente; el texto no altera la pila; y cada etiqueta de cierre desapila su marcador si coincide con el tope. Cuando la pila vuelve a $Z_0$, el autómata puede transicionar espontáneamente ($\lambda$) al estado de aceptación $q_f$.
+* **¿Por qué no es determinista?** En la Clase 8 la función del AFPD es $\delta: Q \times \Sigma \times \Gamma \to Q \times \Gamma^*$, sin transiciones $\lambda$. Nuestro autómata necesita la transición $\Delta(q_0, \lambda, Z_0) = \{(q_f, Z_0)\}$ para aceptar, y esta coexiste con las lecturas desde $q_0$ con tope $Z_0$ (por ejemplo $\Delta(q_0, \langle p\rangle, Z_0)$): con tope $Z_0$ la máquina puede leer **o** saltar a $q_f$. Ese es el **único punto de no determinismo**; todas las demás transiciones tienen a lo sumo una opción.
+* **Sin ambigüedad en la práctica:** la rama que toma la transición $\lambda$ antes de terminar la entrada muere en $q_f$ (que no tiene transiciones salientes) sin haber consumido $w$. Por eso la única rama que puede aceptar es la que salta a $q_f$ con la entrada ya consumida, y es la que sigue el simulador de la Fase 3.
 
 ---
 
 ## 2. Definición Formal del Autómata a Pila ($M$)
 
-Conforme a la definición de la **Clase 8 (diapositiva 3)**, definimos formalmente el AFPD como la 7-upla:
+Conforme a la definición de la **Clase 8 (diapositivas 7-10)**, definimos formalmente el AFPN-$\lambda$ como la 7-upla:
 
-$$M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \delta)$$
+$$M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \Delta)$$
 
 Donde:
 
@@ -53,12 +55,14 @@ $$F = \{ q_f \}$$
 
 ---
 
-## 3. Función de Transición ($\delta$)
+## 3. Función de Transición ($\Delta$)
 
-Siguiendo la definición de la **Clase 8 (diapositiva 4)**:
-$$\delta: Q \times (\Sigma \cup \{\lambda\}) \times \Gamma \rightarrow Q \times \Gamma^*$$
+Siguiendo la definición del AFPN-$\lambda$ de la **Clase 8 (diapositivas 7-10)**:
+$$\Delta: Q \times (\Sigma \cup \{\lambda\}) \times \Gamma \rightarrow \mathcal{P}(Q \times \Gamma^*)$$
 
-Donde $\delta(q, a, z) = (q', \gamma)$ significa que estando en el estado $q$, leyendo el símbolo $a$ y con el símbolo $z$ en el tope de la pila, el autómata transiciona al estado $q'$ y **reemplaza el tope $z$ por la cadena $\gamma$**.
+Donde $(q', \gamma) \in \Delta(q, a, z)$ significa que estando en el estado $q$, leyendo el símbolo $a$ (o sin leer nada si $a = \lambda$) y con el símbolo $z$ en el tope de la pila, el autómata puede transicionar al estado $q'$ y **reemplazar el tope $z$ por la cadena $\gamma$**.
+
+> **Notación:** como cada $\Delta(q, a, z)$ de este autómata tiene a lo sumo un elemento, en la tabla y las trazas escribimos $\Delta(q, a, z) = (q', \gamma)$ como abreviatura de $\Delta(q, a, z) = \{(q', \gamma)\}$.
 
 * Si $\gamma = Yz$: Operación **PUSH** (se apila $Y$ sobre $z$).
 * Si $\gamma = z$: Operación **NO-OP** (se conserva el tope $z$).
@@ -66,7 +70,7 @@ Donde $\delta(q, a, z) = (q', \gamma)$ significa que estando en el estado $q$, l
 
 ### Tabla Formal de Transiciones
 
-| N° | Estado ($q$) | Entrada ($a$) | Tope ($z$) | $\delta(q, a, z) = (q', \gamma)$ | Operación | Justificación Teórica |
+| N° | Estado ($q$) | Entrada ($a$) | Tope ($z$) | $\Delta(q, a, z) = (q', \gamma)$ | Operación | Justificación Teórica |
 |:--:|:---:|:---:|:---:|:---:|:---:|:---|
 | **1** | $q_0$ | `TEXTO` | $X \in \Gamma$ | $(q_0, X)$ | No-op | El texto plano no altera el anidamiento. |
 | **2** | $q_0$ | `<b>` | $X \in \Gamma$ | $(q_0, BX)$ | Push | Apila $B$ para recordar que se abrió `<b>`. |
@@ -77,7 +81,7 @@ Donde $\delta(q, a, z) = (q', \gamma)$ significa que estando en el estado $q$, l
 | **7** | $q_0$ | `</p>` | $P$ | $(q_0, \lambda)$ | Pop | Cierre correcto de `<p>`: desapila $P$. |
 | **8** | $q_0$ | $\lambda$ | $Z_0$ | $(q_f, Z_0)$ | Aceptación | Entrada consumida y pila en $Z_0$ $\rightarrow$ pasa a $q_f$. |
 
-> **Bloqueo formal:** Para cualquier combinación no listada (ejemplo: leer `</b>` con tope $P$ o $Z_0$), $\delta$ está **indefinida** ($\delta = \emptyset$), produciendo el bloqueo inmediato y el rechazo de la cadena por violación sintáctica LIFO.
+> **Bloqueo formal:** Para cualquier combinación no listada (ejemplo: leer `</b>` con tope $P$ o $Z_0$), $\Delta = \emptyset$, produciendo el bloqueo inmediato y el rechazo de la cadena por violación sintáctica LIFO.
 
 ---
 
@@ -110,7 +114,7 @@ Según la definición formal de la **Clase 8 (diapositiva 11)**, una configuraci
 $$(q, \omega, \gamma)$$
 Donde $q$ es el estado actual, $\omega$ la entrada remanente, y $\gamma$ el contenido de la pila (con el tope escrito a la izquierda: $\gamma = X\zeta$).
 Un paso de procesamiento se denota como:
-$$(q, a\omega', X\zeta) \vdash (p, \omega', \eta\zeta) \quad \text{si } \delta(q, a, X) = (p, \eta)$$
+$$(q, a\omega', X\zeta) \vdash (p, \omega', \eta\zeta) \quad \text{si } (p, \eta) \in \Delta(q, a, X)$$
 
 ---
 
@@ -118,16 +122,16 @@ $$(q, a\omega', X\zeta) \vdash (p, \omega', \eta\zeta) \quad \text{si } \delta(q
 $$\alpha = \text{<p> TEXTO <b> TEXTO </b> </p>}$$
 
 ```text
-Paso   Configuración Instantánea                                             Transición Aplicada (δ)
+Paso   Configuración Instantánea                                             Transición Aplicada (Δ)
 --------------------------------------------------------------------------------------------------------------------------
 01.    (q0,  <p> TEXTO <b> TEXTO </b> </p>,                   Z0)             Configuración inicial
-02.    |- (q0,  TEXTO <b> TEXTO </b> </p>,                   P Z0)            Regla 4: δ(q0, <p>, Z0) = (q0, P Z0)
-03.    |- (q0,  <b> TEXTO </b> </p>,                         P Z0)            Regla 1: δ(q0, TEXTO, P) = (q0, P)
-04.    |- (q0,  TEXTO </b> </p>,                           B P Z0)            Regla 2: δ(q0, <b>, P) = (q0, B P)
-05.    |- (q0,  </b> </p>,                                 B P Z0)            Regla 1: δ(q0, TEXTO, B) = (q0, B)
-06.    |- (q0,  </p>,                                        P Z0)            Regla 5: δ(q0, </b>, B) = (q0, λ)
-07.    |- (q0,  λ,                                             Z0)            Regla 7: δ(q0, </p>, P) = (q0, λ)
-08.    |- (qf,  λ,                                             Z0)            Regla 8: δ(q0, λ, Z0) = (qf, Z0)
+02.    |- (q0,  TEXTO <b> TEXTO </b> </p>,                   P Z0)            Regla 4: Δ(q0, <p>, Z0) = (q0, P Z0)
+03.    |- (q0,  <b> TEXTO </b> </p>,                         P Z0)            Regla 1: Δ(q0, TEXTO, P) = (q0, P)
+04.    |- (q0,  TEXTO </b> </p>,                           B P Z0)            Regla 2: Δ(q0, <b>, P) = (q0, B P)
+05.    |- (q0,  </b> </p>,                                 B P Z0)            Regla 1: Δ(q0, TEXTO, B) = (q0, B)
+06.    |- (q0,  </p>,                                        P Z0)            Regla 5: Δ(q0, </b>, B) = (q0, λ)
+07.    |- (q0,  λ,                                             Z0)            Regla 7: Δ(q0, </p>, P) = (q0, λ)
+08.    |- (qf,  λ,                                             Z0)            Regla 8: Δ(q0, λ, Z0) = (qf, Z0)
 --------------------------------------------------------------------------------------------------------------------------
 Resultado: Cadena ACEPTADA (qf ∈ F, entrada consumida y pila en Z0). w ∈ L(M).
 ```
@@ -138,19 +142,19 @@ Resultado: Cadena ACEPTADA (qf ∈ F, entrada consumida y pila en Z0). w ∈ L(M
 $$\beta = \text{<p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>}$$
 
 ```text
-Paso   Configuración Instantánea                                             Transición Aplicada (δ)
+Paso   Configuración Instantánea                                             Transición Aplicada (Δ)
 --------------------------------------------------------------------------------------------------------------------------
 01.    (q0,  <p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>,    Z0)             Configuración inicial
-02.    |- (q0,  TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>,    P Z0)            Regla 4: δ(q0, <p>, Z0) = (q0, P Z0)
-03.    |- (q0,  <b> TEXTO </b> <i> TEXTO </i> </p>,          P Z0)            Regla 1: δ(q0, TEXTO, P) = (q0, P)
-04.    |- (q0,  TEXTO </b> <i> TEXTO </i> </p>,            B P Z0)            Regla 2: δ(q0, <b>, P) = (q0, B P)
-05.    |- (q0,  </b> <i> TEXTO </i> </p>,                  B P Z0)            Regla 1: δ(q0, TEXTO, B) = (q0, B)
-06.    |- (q0,  <i> TEXTO </i> </p>,                         P Z0)            Regla 5: δ(q0, </b>, B) = (q0, λ)
-07.    |- (q0,  TEXTO </i> </p>,                           I P Z0)            Regla 3: δ(q0, <i>, P) = (q0, I P)
-08.    |- (q0,  </i> </p>,                                 I P Z0)            Regla 1: δ(q0, TEXTO, I) = (q0, I)
-09.    |- (q0,  </p>,                                        P Z0)            Regla 6: δ(q0, </i>, I) = (q0, λ)
-10.    |- (q0,  λ,                                             Z0)            Regla 7: δ(q0, </p>, P) = (q0, λ)
-11.    |- (qf,  λ,                                             Z0)            Regla 8: δ(q0, λ, Z0) = (qf, Z0)
+02.    |- (q0,  TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>,    P Z0)            Regla 4: Δ(q0, <p>, Z0) = (q0, P Z0)
+03.    |- (q0,  <b> TEXTO </b> <i> TEXTO </i> </p>,          P Z0)            Regla 1: Δ(q0, TEXTO, P) = (q0, P)
+04.    |- (q0,  TEXTO </b> <i> TEXTO </i> </p>,            B P Z0)            Regla 2: Δ(q0, <b>, P) = (q0, B P)
+05.    |- (q0,  </b> <i> TEXTO </i> </p>,                  B P Z0)            Regla 1: Δ(q0, TEXTO, B) = (q0, B)
+06.    |- (q0,  <i> TEXTO </i> </p>,                         P Z0)            Regla 5: Δ(q0, </b>, B) = (q0, λ)
+07.    |- (q0,  TEXTO </i> </p>,                           I P Z0)            Regla 3: Δ(q0, <i>, P) = (q0, I P)
+08.    |- (q0,  </i> </p>,                                 I P Z0)            Regla 1: Δ(q0, TEXTO, I) = (q0, I)
+09.    |- (q0,  </p>,                                        P Z0)            Regla 6: Δ(q0, </i>, I) = (q0, λ)
+10.    |- (q0,  λ,                                             Z0)            Regla 7: Δ(q0, </p>, P) = (q0, λ)
+11.    |- (qf,  λ,                                             Z0)            Regla 8: Δ(q0, λ, Z0) = (qf, Z0)
 --------------------------------------------------------------------------------------------------------------------------
 Resultado: Cadena ACEPTADA (qf ∈ F, entrada consumida y pila en Z0). w ∈ L(M).
 ```
@@ -161,17 +165,17 @@ Resultado: Cadena ACEPTADA (qf ∈ F, entrada consumida y pila en Z0). w ∈ L(M
 $$\gamma = \text{<p> TEXTO TEXTO </p> <i> TEXTO </i>}$$
 
 ```text
-Paso   Configuración Instantánea                                             Transición Aplicada (δ)
+Paso   Configuración Instantánea                                             Transición Aplicada (Δ)
 --------------------------------------------------------------------------------------------------------------------------
 01.    (q0,  <p> TEXTO TEXTO </p> <i> TEXTO </i>,             Z0)             Configuración inicial
-02.    |- (q0,  TEXTO TEXTO </p> <i> TEXTO </i>,             P Z0)            Regla 4: δ(q0, <p>, Z0) = (q0, P Z0)
-03.    |- (q0,  TEXTO </p> <i> TEXTO </i>,                   P Z0)            Regla 1: δ(q0, TEXTO, P) = (q0, P)
-04.    |- (q0,  </p> <i> TEXTO </i>,                         P Z0)            Regla 1: δ(q0, TEXTO, P) = (q0, P)
-05.    |- (q0,  <i> TEXTO </i>,                                Z0)            Regla 7: δ(q0, </p>, P) = (q0, λ)
-06.    |- (q0,  TEXTO </i>,                                  I Z0)            Regla 3: δ(q0, <i>, Z0) = (q0, I Z0)
-07.    |- (q0,  </i>,                                        I Z0)            Regla 1: δ(q0, TEXTO, I) = (q0, I)
-08.    |- (q0,  λ,                                             Z0)            Regla 6: δ(q0, </i>, I) = (q0, λ)
-09.    |- (qf,  λ,                                             Z0)            Regla 8: δ(q0, λ, Z0) = (qf, Z0)
+02.    |- (q0,  TEXTO TEXTO </p> <i> TEXTO </i>,             P Z0)            Regla 4: Δ(q0, <p>, Z0) = (q0, P Z0)
+03.    |- (q0,  TEXTO </p> <i> TEXTO </i>,                   P Z0)            Regla 1: Δ(q0, TEXTO, P) = (q0, P)
+04.    |- (q0,  </p> <i> TEXTO </i>,                         P Z0)            Regla 1: Δ(q0, TEXTO, P) = (q0, P)
+05.    |- (q0,  <i> TEXTO </i>,                                Z0)            Regla 7: Δ(q0, </p>, P) = (q0, λ)
+06.    |- (q0,  TEXTO </i>,                                  I Z0)            Regla 3: Δ(q0, <i>, Z0) = (q0, I Z0)
+07.    |- (q0,  </i>,                                        I Z0)            Regla 1: Δ(q0, TEXTO, I) = (q0, I)
+08.    |- (q0,  λ,                                             Z0)            Regla 6: Δ(q0, </i>, I) = (q0, λ)
+09.    |- (qf,  λ,                                             Z0)            Regla 8: Δ(q0, λ, Z0) = (qf, Z0)
 --------------------------------------------------------------------------------------------------------------------------
 Resultado: Cadena ACEPTADA (qf ∈ F, entrada consumida y pila en Z0). w ∈ L(M).
 ```
@@ -185,11 +189,11 @@ $$\text{Inválida} = \text{<p> <b> TEXTO </p> </b>}$$
 Paso   Configuración Instantánea                                             Transición Aplicada / Evento
 --------------------------------------------------------------------------------------------------------------------------
 01.    (q0,  <p> <b> TEXTO </p> </b>,                         Z0)             Configuración inicial
-02.    |- (q0,  <b> TEXTO </p> </b>,                         P Z0)            δ(q0, <p>, Z0) = (q0, P Z0)
-03.    |- (q0,  TEXTO </p> </b>,                           B P Z0)            δ(q0, <b>, P) = (q0, B P)
-04.    |- (q0,  </p> </b>,                                 B P Z0)            δ(q0, TEXTO, B) = (q0, B)
+02.    |- (q0,  <b> TEXTO </p> </b>,                         P Z0)            Δ(q0, <p>, Z0) = (q0, P Z0)
+03.    |- (q0,  TEXTO </p> </b>,                           B P Z0)            Δ(q0, <b>, P) = (q0, B P)
+04.    |- (q0,  </p> </b>,                                 B P Z0)            Δ(q0, TEXTO, B) = (q0, B)
 05.    BLOQUEO: Se intenta leer '</p>' pero el tope de la pila es 'B'.
-       δ(q0, '</p>', B) está INDEFINIDA en el autómata.
+       Δ(q0, </p>, B) = ∅ (no hay transición definida).
 --------------------------------------------------------------------------------------------------------------------------
 Resultado: Cadena RECHAZADA (w ∉ L(M)).
 Diagnóstico: Violación del principio LIFO. Se esperaba cerrar '<b>' (tope B), pero se leyó '</p>'.
@@ -201,7 +205,7 @@ Diagnóstico: Violación del principio LIFO. Se esperaba cerrar '<b>' (tope B), 
 
 Por el **Teorema de Equivalencia** (Clase 8, diapositiva 21): $L$ es LIC si y sólo si existe un autómata a pila que lo reconozca.
 
-| Gramática Libre de Contexto ($G$) (Clase 7) | Autómata a Pila Determinista ($M$) (Clase 8) |
+| Gramática Libre de Contexto ($G$) (Clase 7) | Autómata a Pila AFPN-$\lambda$ ($M$) (Clase 8) |
 |:---|:---|
 | Regla $E \rightarrow \langle\text{tag}\rangle S \langle/\text{tag}\rangle$ | Operación **PUSH** al leer apertura y **POP** al leer cierre |
 | Anidamiento jerárquico de $S$ | Crecimiento en profundidad de la pila LIFO ($\Gamma$) |

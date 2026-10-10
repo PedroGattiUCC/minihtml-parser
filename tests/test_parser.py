@@ -77,12 +77,56 @@ class TestMiniHTML(unittest.TestCase):
         self.assertFalse(valida_g)
 
     def test_etiqueta_sin_cerrar(self):
-        """Apertura sin cierre: <p> <b> TEXTO"""
-        tokens = tokenizar("<p> <b> TEXTO")
+        """Apertura sin cierre: <p> <b> TEXTO </b>"""
+        tokens = tokenizar("<p> <b> TEXTO </b>")
         valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
         valida_g, _ = self.g.validar(tokens)
         self.assertFalse(valida_ap)
         self.assertFalse(valida_g)
+
+    def test_etiquetas_mal_formadas(self):
+        """Etiquetas mal escritas deben rechazarse como error léxico, no como TEXTO"""
+        for cadena in ["TEXTO <b", "<p> < b > TEXTO </p>", "<p class=x> TEXTO </p>", "<b TEXTO </b>"]:
+            tokens = tokenizar(cadena)
+            valida_ap, mensaje_ap, _ = self.ap.simular(tokens, imprimir_traza=False)
+            valida_g, mensaje_g = self.g.validar(tokens)
+            self.assertFalse(valida_ap, cadena)
+            self.assertFalse(valida_g, cadena)
+            self.assertIn("léxico", mensaje_ap)
+            self.assertIn("léxico", mensaje_g)
+
+    def test_etiqueta_desconocida(self):
+        """</u> no pertenece a Σ: ambos modelos lo reportan como error léxico"""
+        tokens = tokenizar("<p> </u> </p>")
+        _, mensaje_ap, _ = self.ap.simular(tokens, imprimir_traza=False)
+        _, mensaje_g = self.g.validar(tokens)
+        self.assertIn("léxico", mensaje_ap)
+        self.assertIn("léxico", mensaje_g)
+
+    def test_mensaje_etiquetas_pendientes(self):
+        """Al final de la entrada se informan las etiquetas abiertas, no Z0"""
+        tokens = tokenizar("<p> <i> <b> TEXTO </b>")
+        valida_ap, mensaje_ap, _ = self.ap.simular(tokens, imprimir_traza=False)
+        self.assertFalse(valida_ap)
+        self.assertIn("<i>, <p>", mensaje_ap)
+        self.assertNotIn("Z0", mensaje_ap)
+
+    def test_traza_configuraciones(self):
+        """Cada configuración (q, ω, γ) muestra la entrada restante luego de leer el símbolo"""
+        tokens = tokenizar("<p> TEXTO </p>")
+        _, _, traza = self.ap.simular(tokens, imprimir_traza=False)
+        self.assertIn("(q0, <p> TEXTO </p>, Z0)", traza[0])
+        self.assertIn("(q0, TEXTO </p>, P Z0)", traza[1])
+        self.assertIn("(q0, λ, Z0)", traza[3])
+        self.assertIn("(qf, λ, Z0)", traza[4])
+
+    def test_anidamiento_profundo(self):
+        """Un anidamiento muy profundo no debe romper el programa"""
+        tokens = ["<b>"] * 3000 + ["</b>"] * 3000
+        valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
+        valida_g, _ = self.g.validar(tokens)
+        self.assertTrue(valida_ap)
+        self.assertIsInstance(valida_g, bool)
 
     # 4. Modificación en Vivo (Defensa Oral)
     def test_incorporar_nueva_etiqueta(self):
