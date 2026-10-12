@@ -87,23 +87,28 @@ Donde $(q', \gamma) \in \Delta(q, a, z)$ significa que estando en el estado $q$,
 
 ## 4. Diagrama de Transición del Autómata (Clase 8, pág. 6)
 
-Convención de rotulado: `entrada, tope_pila / nuevo_tope`
+Convención de rotulado: `entrada, tope_pila / nuevo_tope`  
+Donde $X \in \Gamma = \{Z_0, B, I, P\}$ representa cualquier símbolo en el tope de la pila.
+
+<div align="center">
+  <img src="img/automata_transiciones.svg" alt="Diagrama de Transición del Autómata a Pila (AFPN-λ)" width="850"/>
+  <p><em>Figura 2.1: Diagrama de transición formal del AFPN-λ con nodos circulares (q₀ y estado final doble círculo q_f) según la convención de la Clase 8.</em></p>
+</div>
+
+<br/>
+
+### Representación en Código Mermaid
 
 ```mermaid
-stateDiagram-v2
-    [*] --> q0: Pila inicial = [Z0]
+flowchart LR
+    %% Estados con notación formal de autómata (círculo y doble círculo)
+    inicio(["Inicio<br/>Pila: [Z₀]"]) --> q0(( "q₀" ))
     
-    q0 --> q0: TEXTO, X / X (X ∈ {Z0, B, I, P})
-    q0 --> q0: < b >, X / B X
-    q0 --> q0: < i >, X / I X
-    q0 --> q0: < p >, X / P X
+    %% Transición espontánea de aceptación hacia el estado final
+    q0 -->|"λ, Z₀ / Z₀<br/><i>(Transición espontánea)</i>"| qf((( "q_f" )))
     
-    q0 --> q0: < /b >, B / λ (pop)
-    q0 --> q0: < /i >, I / λ (pop)
-    q0 --> q0: < /p >, P / λ (pop)
-    
-    q0 --> qf: λ, Z0 / Z0
-    qf --> [*]
+    %% Bucle de procesamiento sobre q0 (Lectura, Push y Pop)
+    q0 -->|"<b>1. Lectura (No-op):</b><br/>• TEXTO, X / X<br/><br/><b>2. Aperturas (Push):</b><br/>• &lt;b&gt;, X / BX<br/>• &lt;i&gt;, X / IX<br/>• &lt;p&gt;, X / PX<br/><br/><b>3. Cierres (Pop):</b><br/>• &lt;/b&gt;, B / λ<br/>• &lt;/i&gt;, I / λ<br/>• &lt;/p&gt;, P / λ"| q0
 ```
 
 ---
