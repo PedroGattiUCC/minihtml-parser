@@ -18,10 +18,10 @@ El programa implementa **solo la opción B de la consigna: el simulador del aut�
 
 ## Antes de practicar: guardá una copia
 
-**Practicá en la rama `simplificar-parser-e-informe`.** Esta versión ya está commiteada ahí, pero **`master` tiene el código viejo** hasta que se haga el merge. Si no sabés en qué rama estás:
+**Practicá en `master`, con la última versión.** Antes de empezar, bajala:
 
 ```bash
-git branch --show-current
+git pull
 ```
 
 Cuando termines un ejercicio, deshacé tus pruebas con este comando, que borra todo lo que no commiteaste en esos dos archivos:
