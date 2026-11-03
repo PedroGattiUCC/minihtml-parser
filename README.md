@@ -55,7 +55,7 @@ python -m unittest tests/test_parser.py
 
 ```text
 ├── entregables/
-│   └── Informe miniparser-html.pdf  # Informe técnico (Fases 1 y 2, y por qué se necesita una pila)
+│   └── Informe miniparser-html.pdf  # Informe técnico (Fases 1 a 3, y por qué se necesita una pila)
 ├── src/
 │   └── parser.py                    # Simulador del autómata a pila (programa de la demo)
 ├── tests/
