@@ -81,7 +81,7 @@ Una cadena es válida si toda etiqueta abierta se cierra con una del mismo tipo,
 
 ### 3.1 Alfabeto, cadena y lenguaje
 
-- **Alfabeto (Σ):** conjunto finito de símbolos. Acá cada símbolo es un *token* entero: `<b>` es **un** símbolo, no tres caracteres.
+- **Alfabeto (Σ):** conjunto finito no vacío de símbolos. Acá cada símbolo es un *token* entero: `<b>` es **un** símbolo, no tres caracteres.
 - **Cadena:** secuencia finita de símbolos. `<p> TEXTO </p>` tiene longitud 3.
 - **λ (lambda):** la cadena vacía, de longitud 0.
 - **Σ\*:** todas las cadenas posibles con ese alfabeto, válidas o no.
@@ -95,22 +95,24 @@ Una cadena es válida si toda etiqueta abierta se cierra con una del mismo tipo,
 
 ### 3.3 Jerarquía de Chomsky
 
-Clasifica los lenguajes según la memoria que necesita la máquina que los reconoce. Cada tipo contiene a los de las filas de abajo, y los regulares son los más restringidos:
+Clasifica los lenguajes según su dificultad: qué tan sofisticado es el modelo computacional necesario para computarlos. Cada tipo contiene a los de las filas de abajo, y los regulares son los más restringidos:
 
 | Tipo | Lenguajes | Gramática | Máquina | Memoria |
 |---|---|---|---|---|
-| 0 | Recursivamente enumerables | Sin restricciones | Máquina de Turing | Cinta infinita |
-| 1 | Sensibles al contexto | Sensible al contexto | Autómata linealmente acotado | Cinta acotada |
+| 0 | Recursivamente enumerables | Sin restricciones | Máquina de Turing | Cinta |
+| 1 | Sensibles al contexto | Sensible al contexto | Autómata finito con n pilas | n pilas |
 | **2** | **Libres de contexto (LIC)** | **Libre de contexto** | **Autómata a pila** | **Pila sin límite** |
 | 3 | Regulares | Regular | Autómata finito | Solo los estados |
 
 **MiniHTML es de tipo 2**: no es regular y una pila alcanza.
 
+> La fila del tipo 1 sigue la Clase 0. El syllabus nombra ahí a los autómatas linealmente acotados: si lo preguntan, aclará que la clase dice "n pilas".
+
 ### 3.4 Por qué un autómata finito no alcanza
 
 Esto lo pide la consigna y tiene su propia sección en el informe.
 
-**Intuición (principio del palomar).** Un autómata finito solo recuerda en qué estado está. Si tiene k estados y lee más de k etiquetas `<p>` seguidas, dos cantidades distintas de `<p>` abiertos lo dejan en el **mismo estado**. Desde ahí ya no sabe cuántos cierres faltan, así que acepta alguna cadena mal cerrada o rechaza alguna correcta.
+**Intuición.** (Es el principio del palomar, aunque las clases no usan ese nombre.) Un autómata finito solo recuerda en qué estado está. Si tiene k estados y lee más de k etiquetas `<p>` seguidas, dos cantidades distintas de `<p>` abiertos lo dejan en el **mismo estado**. Desde ahí ya no sabe cuántos cierres faltan, así que acepta alguna cadena mal cerrada o rechaza alguna correcta.
 
 **Demostración (lema de bombeo).** Si L es regular, existe un n tal que toda ω ∈ L con |ω| ≥ n se puede escribir ω = αβγ con |αβ| ≤ n, β ≠ λ y αβⁱγ ∈ L para todo i ≥ 0.
 
@@ -132,7 +134,7 @@ Una gramática es una 4-tupla **G = (V, Σ, S, P)**: variables, terminales, sím
 - **Derivación más a la izquierda:** en cada paso se reemplaza la variable que está más a la izquierda.
 - **Árbol de derivación:** la raíz es S, los nodos internos son variables y las hojas son terminales o λ. Leyendo las hojas de izquierda a derecha sale la cadena.
 - **Ambigua:** alguna cadena tiene dos árboles distintos (o dos derivaciones más a la izquierda distintas).
-- **Regular o libre de contexto:** una regular solo admite reglas como `A → aB`, `A → a` o `A → λ`. Una libre de contexto admite `A → α`, con una sola variable a la izquierda y cualquier cosa a la derecha. "Libre de contexto" significa que A se reemplaza sin importar qué tiene alrededor.
+- **Regular o libre de contexto:** una regular es lineal por derecha (`A → aB`, `A → B`, `A → a`, `A → λ`) o lineal por izquierda (`A → Ba`, `A → B`, `A → a`, `A → λ`). Una libre de contexto admite `A → α`, con una sola variable a la izquierda y cualquier cosa a la derecha. "Libre de contexto" significa que A se reemplaza sin importar qué tiene alrededor.
 
 La regla que una gramática regular **no** puede tener es del tipo `S → a S b`, con la variable en el medio: eso es lo que empareja aperturas con cierres. `E → <b> S </b>` es justamente de ese tipo.
 
@@ -163,14 +165,14 @@ En las clases aparece como `M = (Σ, Γ, Q, q₀, Z₀, F, δ)`, y para el no de
 | `λ` | **POP**: saca el tope | leer `</b>` con B en el tope |
 
 - **Bloqueo:** si no hay transición (δ = ∅), la máquina se detiene y rechaza.
-- **Transición λ:** cambia de estado **sin leer** nada de la entrada.
+- **Transición λ o espontánea:** se aplica **sin consumir** nada de la entrada.
 - **Determinista (AFPD):** a lo sumo una opción en cada situación y sin transiciones λ.
-- **No determinista (AFPN-λ):** puede tener varias opciones, incluidas transiciones λ, así que δ devuelve un **conjunto**: `δ: Q × (Σ ∪ {λ}) × Γ → P(Q × Γ*)`. Acepta si **alguna** rama acepta.
-- A diferencia de los autómatas finitos, acá **no** son equivalentes: hay lenguajes libres de contexto que solo se reconocen con no determinismo (por ejemplo, los palíndromos pares).
+- **No determinista (AFPNλ):** puede tener varias opciones, incluidas transiciones λ, así que δ devuelve un **conjunto**: `δ: Q × (Σ ∪ {λ}) × Γ → P(Q × Γ*)`. Acepta si **alguna** rama acepta.
+- A diferencia de los autómatas finitos, acá **no** son equivalentes: hay lenguajes libres de contexto que solo se reconocen con no determinismo (por ejemplo, las cadenas capicúas, porque no se sabe cuándo empieza la segunda mitad).
 - **Configuración instantánea:** la "foto" **(q, ω, γ)**: estado, lo que falta leer y la pila con el **tope a la izquierda**. Un paso se escribe con ⊢.
 - **Aceptación por estado final, L(M):** termina de leer en un estado de F. **Es la que usamos.**
 - **Aceptación por pila vacía, N(M):** termina de leer con la pila vacía. Ambos criterios reconocen la misma clase de lenguajes.
-- **Teorema de equivalencia:** un lenguaje es libre de contexto **si y solo si** lo reconoce un autómata a pila.
+- **Teoremas de equivalencia (Clase 8):** L es LIC **si y solo si** existe un autómata a pila M tal que L = N(M). Además, para los AFPNλ, L(M) y N(M) son equivalentes. Por eso es válido aceptar por estado final.
 
 ---
 
@@ -284,20 +286,20 @@ X es cualquier símbolo de Γ. Cada fila tiene una sola opción, así que `(q0, 
 **En criollo:** cada vez que abro algo lo anoto arriba de la pila; cada vez que cierro, me fijo que sea lo que está arriba y lo tacho. Si al terminar solo queda Z0, está todo bien.
 
 ```
-        TEXTO, X / X
-        <b>, X / B X     </b>, B / λ
-        <i>, X / I X     </i>, I / λ
-        <p>, X / P X     </p>, P / λ
+        TEXTO, X, X
+        <b>, X, B X     </b>, B, λ
+        <i>, X, I X     </i>, I, λ
+        <p>, X, P X     </p>, P, λ
            ┌────────┐
            ▼        │
   ──►  ( q0 ) ──────┘
           │
-          │  λ, Z0 / Z0
+          │  λ, Z0, Z0
           ▼
        (( qf ))
 ```
 
-Se lee `entrada, tope / reemplazo`. El diagrama prolijo está en [automata.png](diagramas/automata.png).
+Se lee `entrada, tope, reemplazo`, como en la Clase 8. El diagrama prolijo está en [automata.png](diagramas/automata.png).
 
 ### Los tres errores posibles, en términos de M
 
@@ -489,7 +491,7 @@ El símbolo de fondo. Si está en el tope, no hay nada abierto. Sirve para acept
 Estado final: se llega a qf y en la pila queda Z0. Para pasar a pila vacía, ver la receta E3 de la [Guía del código](Guia_del_Codigo.md).
 
 **¿Su autómata es determinista?**
-No, es un AFPN-λ, por la regla 8, que compite con leer cuando el tope es Z0. Es el único punto no determinista.
+No, es un AFPNλ, por la regla 8, que compite con leer cuando el tope es Z0. Es el único punto no determinista.
 
 **Si es no determinista, ¿por qué el programa no explora ramas?**
 Porque la única rama que puede aceptar es la que toma la regla 8 con la entrada ya consumida. Cualquier salto anterior muere en qf.
@@ -505,6 +507,9 @@ Para separar secuencia de elemento. Con `S → S S` sería ambigua.
 
 **¿Qué relación hay entre G y M?**
 El teorema: un lenguaje es libre de contexto si y solo si lo reconoce un autómata a pila. Concretamente, cada `E → <x> S </x>` es un PUSH al leer `<x>` y un POP al leer `</x>`, y la S del medio es la pila creciendo.
+
+**¿Por qué no usaron el análisis sintáctico exhaustivo de la Clase 7?**
+Porque tiene complejidad exponencial, y G tiene una regla `S → λ`, así que el teorema de la clase no garantiza que termine. El simulador recorre cada token una sola vez.
 
 **¿Implementaron la opción A o la B?**
 La opción B: el simulador del autómata a pila. Procesa los tokens en orden y usa una lista como pila, igual que la tabla δ del informe.
@@ -548,12 +553,12 @@ G          G = (V, Σ, S, P)    V = {S, E}
            (4) E → <b> S </b>   (5) E → <i> S </i>   (6) E → <p> S </p>
            No ambigua. Apertura y cierre en la misma regla = LIFO.
 
-M          M = (Q, Σ, Γ, δ, q0, Z0, F)     AFPN-λ por ESTADO FINAL
+M          M = (Q, Σ, Γ, δ, q0, Z0, F)     AFPNλ por ESTADO FINAL
            Γ = {Z0,B,I,P}   Q = {q0,qf}   F = {qf}
-           (1)   TEXTO, X / X        sin cambios
-           (2-4) <x>,   X / Y X      PUSH
-           (5-7) </x>,  Y / λ        POP
-           (8)   λ,    Z0 / Z0 → qf  acepta; único no determinismo
+           (1)   TEXTO, X, X        sin cambios
+           (2-4) <x>,   X, Y X      PUSH
+           (5-7) </x>,  Y, λ        POP
+           (8)   λ,    Z0, Z0 → qf  acepta; único no determinismo
            Otro caso: δ = ∅, bloqueo.
 
 NO REGULAR <p>ⁿ TEXTO </p>ⁿ, β = <p>ˢ, i = 0: desbalance, contradicción.

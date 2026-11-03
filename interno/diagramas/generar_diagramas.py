@@ -8,7 +8,7 @@ Uso:
 Crea en esta misma carpeta:
     arbol_alfa.png   árbol de derivación de α = <p> TEXTO <b> TEXTO </b> </p>
     arbol_beta.png   árbol de derivación de β = <p> TEXTO <b> TEXTO </b> <i> TEXTO </i> </p>
-    automata.png     diagrama de transiciones del AFPN-λ M
+    automata.png     diagrama de transiciones del AFPNλ M
 """
 
 from pathlib import Path
@@ -156,16 +156,16 @@ def dibujar_automata(archivo):
 
     # Transición λ de q0 a qf
     ax.add_patch(FancyArrowPatch((q0[0] + r, q0[1]), (qf[0] - r, qf[1]), arrowstyle="-|>", mutation_scale=20, lw=2, color="black"))
-    ax.text((q0[0] + qf[0]) / 2, q0[1] + 0.22, r"λ, $Z_0$ / $Z_0$", ha="center", fontsize=15)
+    ax.text((q0[0] + qf[0]) / 2, q0[1] + 0.22, r"λ, $Z_0$, $Z_0$", ha="center", fontsize=15)
 
     # Lazo sobre q0 con todas las lecturas
     ax.add_patch(FancyArrowPatch((q0[0] - 0.35, q0[1] + 0.43), (q0[0] + 0.35, q0[1] + 0.43),
                                  connectionstyle="arc3,rad=-2.2", arrowstyle="-|>", mutation_scale=20, lw=2, color="black"))
     lineas = [
-        "TEXTO, X / X",
-        "<b>, X / BX       </b>, B / λ",
-        "<i>, X / IX        </i>, I / λ",
-        "<p>, X / PX       </p>, P / λ",
+        "TEXTO, X, X",
+        "<b>, X, BX       </b>, B, λ",
+        "<i>, X, IX        </i>, I, λ",
+        "<p>, X, PX       </p>, P, λ",
     ]
     ax.add_patch(FancyBboxPatch((0.9, 3.25), 3.4, 1.65, boxstyle="round,pad=0.08,rounding_size=0.15",
                                 facecolor="white", edgecolor=GRIS, lw=1))
@@ -173,7 +173,7 @@ def dibujar_automata(archivo):
         ax.text(2.6, 4.6 - i * 0.4, linea, ha="center", va="center", fontsize=14)
 
     ax.text(6.0, 4.3, r"X $\in$ Γ = { $Z_0$, B, I, P }", fontsize=14, color=GRIS)
-    ax.text(6.0, 3.85, "rótulo: entrada, tope / reemplazo", fontsize=14, color=GRIS)
+    ax.text(6.0, 3.85, "rótulo: entrada, tope, reemplazo", fontsize=14, color=GRIS)
 
     fig.savefig(CARPETA / archivo, dpi=200, bbox_inches="tight", facecolor="white")
     plt.close(fig)

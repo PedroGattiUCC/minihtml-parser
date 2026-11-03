@@ -87,16 +87,16 @@ Donde $(q', \gamma) \in \delta(q, a, z)$ significa que estando en el estado $q$,
 
 ## 4. Diagrama de Transición del Autómata (Clase 8, pág. 6)
 
-Convención de rotulado: `entrada, tope_pila / nuevo_tope`  
+Convención de rotulado: `entrada, tope_pila, nuevo_tope`  
 Donde $X \in \Gamma = \{Z_0, B, I, P\}$ representa cualquier símbolo en el tope de la pila.
 
 ```mermaid
 graph LR
     inicio(["Inicio: Pila = [Z₀]"]) --> q0((q₀))
     
-    q0 -->|"λ, Z₀ / Z₀ (Aceptación)"| qf(((q_f)))
+    q0 -->|"λ, Z₀, Z₀ (Aceptación)"| qf(((q_f)))
     
-    q0 -->|"<b>1. Lectura (No-op):</b><br/>• TEXTO, X / X<br/><br/><b>2. Aperturas (Push):</b><br/>• ⟨b⟩, X / BX<br/>• ⟨i⟩, X / IX<br/>• ⟨p⟩, X / PX<br/><br/><b>3. Cierres (Pop):</b><br/>• ⟨/b⟩, B / λ<br/>• ⟨/i⟩, I / λ<br/>• ⟨/p⟩, P / λ"| q0
+    q0 -->|"<b>1. Lectura (No-op):</b><br/>• TEXTO, X, X<br/><br/><b>2. Aperturas (Push):</b><br/>• ⟨b⟩, X, BX<br/>• ⟨i⟩, X, IX<br/>• ⟨p⟩, X, PX<br/><br/><b>3. Cierres (Pop):</b><br/>• ⟨/b⟩, B, λ<br/>• ⟨/i⟩, I, λ<br/>• ⟨/p⟩, P, λ"| q0
 ```
 
 ---

@@ -53,7 +53,7 @@ Una cadena es válida si:
 
 ### 2.1 Alfabeto, cadena, lenguaje (Clase 1)
 
-- **Alfabeto (Σ):** conjunto finito de símbolos. En nuestro caso cada símbolo es un *token* entero (`<b>` es **un** símbolo, no tres caracteres).
+- **Alfabeto (Σ):** conjunto finito no vacío de símbolos. En nuestro caso cada símbolo es un *token* entero (`<b>` es **un** símbolo, no tres caracteres).
 - **Cadena (palabra):** secuencia finita de símbolos del alfabeto. Ej: `<p> TEXTO </p>` es una cadena de longitud 3.
 - **λ (lambda):** la **cadena vacía**, de longitud 0. En MiniHTML es válida (un documento vacío).
 - **Σ\*:** el conjunto de **todas** las cadenas posibles con ese alfabeto (válidas o no).
@@ -69,14 +69,14 @@ Una cadena es válida si:
 
 ### 2.3 Jerarquía de Chomsky (Clase 0)
 
-Clasifica lenguajes según qué tan "poderosa" tiene que ser la máquina que los reconoce. Cada nivel contiene a los de las filas de arriba:
+Clasifica lenguajes según su dificultad: qué tan sofisticado es el modelo computacional necesario para computarlos. Cada nivel contiene a los de las filas de arriba:
 
 | Tipo | Lenguajes | Gramática | Máquina | Memoria |
 |---|---|---|---|---|
 | 3 | **Regulares** | Regular | Autómata Finito (AFD/AFN) | Solo los estados (finita) |
 | 2 | **Independientes / Libres de contexto (LIC)** | **Libre de contexto (GIC/GLC)** | **Autómata a Pila (AP)** | **Una pila (LIFO), sin límite** |
-| 1 | Sensibles al contexto | Sensible al contexto | Autómata linealmente acotado | Cinta acotada |
-| 0 | Recursivamente enumerables | Sin restricciones | Máquina de Turing | Cinta infinita |
+| 1 | Sensibles al contexto | Sensible al contexto | Autómata finito con n pilas | n pilas |
+| 0 | Recursivamente enumerables | Sin restricciones | Máquina de Turing | Cinta |
 
 **MiniHTML es Tipo 2.** No es Tipo 3 (lo demostramos abajo) y alcanza con Tipo 2.
 
@@ -91,7 +91,7 @@ Sirve para cosas como "¿tiene una cantidad par de `a`?" (dos estados: par/impar
 Explicación intuitiva:
 - Pensá en la cadena `<p><p><p>…<p> TEXTO </p>…</p></p></p>` con **n** aperturas y **n** cierres.
 - Para aceptarla, la máquina tiene que "acordarse" de **n** al terminar de leer las aperturas.
-- Un AF tiene, digamos, **k** estados. Si n > k, por el **principio del palomar** dos cantidades distintas de `<p>` abiertos lo dejan en el **mismo estado**, así que la máquina ya no las distingue → acepta algo mal cerrado o rechaza algo bien cerrado.
+- Un AF tiene, digamos, **k** estados. Si n > k, dos cantidades distintas de `<p>` abiertos lo dejan en el **mismo estado**, así que la máquina ya no las distingue → acepta algo mal cerrado o rechaza algo bien cerrado.
 
 Explicación formal con el **Lema de Bombeo** (Clase 6):
 
@@ -106,7 +106,7 @@ Para demostrar que algo **no** es regular, se elige una cadena larga donde **nin
 3. Bombeamos con i = 0 (sacamos β): queda `<p>`ⁿ⁻ˢ `TEXTO` `</p>`ⁿ → hay **más cierres que aperturas** → no pertenece a MiniHTML.
 4. Contradicción → **MiniHTML no es regular.** ∎
 
-(Es el mismo argumento de la Clase 6 para `aⁿbⁿ` y para paréntesis balanceados: MiniHTML "contiene" a esos lenguajes.)
+(Es el mismo argumento de la Clase 6 para `aⁿbⁿ` y para paréntesis balanceados.)
 
 ### 2.5 Gramáticas (Clases 5 y 7)
 
@@ -126,7 +126,7 @@ Una **gramática** es una 4-tupla **G = (V, Σ, S, P)**:
 - **Gramática ambigua:** si alguna cadena tiene **dos árboles distintos** (o dos derivaciones leftmost distintas). Ej. clásico: `E → E+E | E*E | a` con `a+a*a`.
 
 **Gramática regular vs. libre de contexto:**
-- **Regular:** reglas muy restringidas, tipo `A → aB`, `A → a`, `A → λ` (a lo sumo una variable y siempre en el mismo extremo).
+- **Regular:** lineal por derecha (`A → aB`, `A → B`, `A → a`, `A → λ`) o lineal por izquierda (`A → Ba`, `A → B`, `A → a`, `A → λ`).
 - **Libre de contexto (GIC):** a la izquierda hay **una sola variable** y a la derecha **cualquier cosa**: `A → α`. "Libre de contexto" = la variable se reemplaza sin importar qué tenga alrededor.
 - La regla típica que una regular **no** puede tener: `S → a S b` (la variable en el medio, rodeada de terminales). Eso es lo que permite "emparejar" aperturas con cierres. Nuestras reglas `E → <b> S </b>` son exactamente de ese tipo.
 
@@ -158,12 +158,12 @@ Es un autómata finito **más una pila**. Tiene dos "cintas":
 
 Si para la combinación (estado, símbolo, tope) **no hay transición** (δ = ∅), la máquina **se bloquea** y la cadena se rechaza.
 
-**Transición λ (espontánea):** `δ(q, λ, z)` = la máquina cambia de estado **sin leer** nada de la entrada.
+**Transición λ (espontánea):** `δ(q, λ, z)` = la transición se aplica **sin consumir** nada de la entrada.
 
 **Determinista vs. no determinista:**
 - **AFPD (determinista):** en cada situación hay **a lo sumo una** opción y **no** hay transiciones λ. `δ: Q × Σ × Γ → Q × Γ*`.
-- **AFPN-λ (no determinista con λ):** puede haber **varias** opciones, incluidas transiciones λ. `δ: Q × (Σ ∪ {λ}) × Γ → P(Q × Γ*)` (el resultado es un **conjunto** de opciones). Acepta si **alguna** de las ramas acepta.
-- ⚠️ A diferencia de los AF (donde AFD ≡ AFN), en autómatas a pila **AFPD ⊂ AFPN-λ**: hay lenguajes libres de contexto que solo se reconocen con no determinismo (ej. palíndromos pares `wwᴿ`, porque no se sabe dónde está la mitad).
+- **AFPNλ (no determinista con λ):** puede haber **varias** opciones, incluidas transiciones λ. `δ: Q × (Σ ∪ {λ}) × Γ → P(Q × Γ*)` (el resultado es un **conjunto** de opciones). Acepta si **alguna** de las ramas acepta.
+- ⚠️ A diferencia de los AF (donde AFD ≡ AFN), en autómatas a pila **AFPD ⊂ AFPNλ**: hay lenguajes libres de contexto que solo se reconocen con no determinismo (ej. las cadenas capicúas, porque no se sabe cuándo empieza la segunda mitad).
 
 **Configuración instantánea:** la "foto" de la máquina en un momento: **(q, ω, γ)** = (estado actual, lo que falta leer, contenido de la pila con el **tope a la izquierda**). Un paso se escribe con **⊢**:
 ```
@@ -176,7 +176,7 @@ Una **traza** es la secuencia de configuraciones desde `(q₀, w, Z₀)` hasta e
 - **Por vaciado de pila, N(M):** termina de leer y la pila quedó vacía (no importa el estado).
 - Para un mismo M pueden dar lenguajes distintos, pero el **teorema** dice que cualquier AP de un tipo se puede convertir en uno del otro tipo que acepta lo mismo.
 
-**Teorema de equivalencia (Clase 8, diap. 21):** un lenguaje es libre de contexto **si y solo si** existe un autómata a pila que lo reconoce. GIC ↔ AP. Por eso tiene sentido describir el mismo lenguaje con G y con M.
+**Teorema de equivalencia (Clase 8, diap. 21):** L es LIC **si y solo si** existe un autómata a pila M tal que L = N(M). Además, para los AFPNλ, L(M) y N(M) son equivalentes (diap. 14), y por eso es válido aceptar por estado final. Por eso tiene sentido describir el mismo lenguaje con G y con M.
 
 ---
 
@@ -280,19 +280,19 @@ Cualquier otra combinación → **δ = ∅ → bloqueo → rechazo**. Ej: leer `
 
 **Diagrama:**
 ```
-        TEXTO, X / X
-        <b>, X / B X     </b>, B / λ
-        <i>, X / I X     </i>, I / λ
-        <p>, X / P X     </p>, P / λ
+        TEXTO, X, X
+        <b>, X, B X     </b>, B, λ
+        <i>, X, I X     </i>, I, λ
+        <p>, X, P X     </p>, P, λ
            ┌────────┐
            ▼        │
   ──►  ( q0 ) ──────┘
           │
-          │  λ, Z0 / Z0
+          │  λ, Z0, Z0
           ▼
        (( qf ))
 ```
-(rótulo: `lo que leo, tope / con qué lo reemplazo`)
+(rótulo, como en la Clase 8: `lo que leo, tope, con qué lo reemplazo`)
 
 **Decisiones de diseño que hay que saber justificar:**
 - **Aceptación por estado final** (no por vaciado): al final la pila tiene `Z0` (no está vacía) y pasamos a `qf`.
@@ -462,7 +462,7 @@ El símbolo de fondo de pila. Sirve para saber cuándo la pila está "vacía" de
 Por estado final (llegar a qf). La pila termina con Z0. Si quisiéramos vaciado de pila, cambiaríamos la regla 8 por `δ(q0, λ, Z0) = (q0, λ)` (sacar Z0); por el teorema de la Clase 8 ambos criterios reconocen la misma clase de lenguajes.
 
 **¿Su autómata es determinista?**
-No, es un AFPN-λ. El único no determinismo es la regla 8 (λ con tope Z0), que compite con leer el siguiente token cuando el tope es Z0. En la práctica no molesta porque saltar a qf antes de terminar deja entrada sin leer y esa rama muere.
+No, es un AFPNλ. El único no determinismo es la regla 8 (λ con tope Z0), que compite con leer el siguiente token cuando el tope es Z0. En la práctica no molesta porque saltar a qf antes de terminar deja entrada sin leer y esa rama muere.
 
 **¿Se podría hacer determinista?** *(pregunta difícil, por si acaso)*
 Sí. Con la definición de la cátedra (AFPD sin transiciones λ), usando dos estados: q0 = "no hay nada abierto" (final) y q1 = "hay algo abierto". Al abrir una etiqueta desde q0 se apila una marca especial de "primer nivel" (ej. `B̂`); al cerrar esa marca se vuelve a q0. Así no hace falta la λ y q0 ∈ F acepta al terminar.
@@ -509,12 +509,12 @@ GRAMÁTICA     G = (V, Σ, S, P),  V = {S, E}
               E → TEXTO | <b> S </b> | <i> S </i> | <p> S </p>
               no ambigua · apertura y cierre en la misma regla ⇒ LIFO
 
-AUTÓMATA      M = (Q, Σ, Γ, δ, q0, Z0, F)       AFPN-λ, acepta por ESTADO FINAL
+AUTÓMATA      M = (Q, Σ, Γ, δ, q0, Z0, F)       AFPNλ, acepta por ESTADO FINAL
               Γ = {Z0, B, I, P}   Q = {q0, qf}   F = {qf}
-              TEXTO, X / X          (no-op)
-              <x>,   X / Xmay X     (PUSH)
-              </x>,  Xmay / λ       (POP)
-              λ,     Z0 / Z0  → qf  (aceptar; único no determinismo)
+              TEXTO, X, X          (no-op)
+              <x>,   X, Xmay X     (PUSH)
+              </x>,  Xmay, λ       (POP)
+              λ,     Z0, Z0  → qf  (aceptar; único no determinismo)
               otro caso: δ = ∅ → bloqueo → rechazo
 
 TRAZA         (q, lo que falta, pila con tope a la izq.)  ⊢  …
