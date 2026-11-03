@@ -1,8 +1,10 @@
 # Guía de estudio para la defensa — MiniHTML Parser
 
-Esta guía alcanza por sí sola para preparar el oral: explica la teoría desde cero, la gramática, el autómata, **todo el código** y **cómo hacer las modificaciones en vivo**. Usa la misma numeración de reglas y transiciones que el [informe](../entregables/Informe%20miniparser-html.pdf), porque es lo que la profe va a tener enfrente.
+Esta guía alcanza por sí sola para preparar el oral: explica la teoría desde cero, la gramática, el autómata, el código y las modificaciones en vivo, que se detallan en la [Guía del código](Guia_del_Codigo.md). Usa la misma numeración de reglas y transiciones que el [informe](../entregables/Informe%20miniparser-html.pdf), porque es lo que la profe va a tener enfrente.
 
-> **Material interno: no se entrega.** Todas las modificaciones de la sección 8 y las cadenas de la sección 7 se ejecutaron sobre el código real del proyecto. Las líneas citadas son las de [src/parser.py](../src/parser.py) sin modificar.
+> **Para estudiar el código y practicar cambios en profundidad, usá la [Guía del código](Guia_del_Codigo.md).**
+>
+> **Material interno: no se entrega.** Las cadenas de la sección 7 se ejecutaron sobre el código real del proyecto. Las líneas citadas son las de [src/parser.py](../src/parser.py) sin modificar.
 
 ## Índice
 
@@ -11,7 +13,7 @@ Esta guía alcanza por sí sola para preparar el oral: explica la teoría desde 
 3. [Teoría desde cero](#3-teoría-desde-cero)
 4. [La gramática G](#4-la-gramática-g)
 5. [El autómata a pila M](#5-el-autómata-a-pila-m)
-6. [El código, parte por parte](#6-el-código-parte-por-parte)
+6. [El código](#6-el-código)
 7. [La demo en vivo](#7-la-demo-en-vivo)
 8. [Modificaciones en vivo](#8-modificaciones-en-vivo)
 9. [Preguntas probables](#9-preguntas-probables)
@@ -26,18 +28,25 @@ La entrevista vale el **30 %** de la nota, pero también defiende el otro 70 %. 
 | Prueba | Qué va a pasar | Dónde prepararla |
 |---|---|---|
 | **Testeo en vivo** | La profe escribe cadenas válidas e inválidas. El programa tiene que clasificarlas y explicar el error. | Sección 7 |
-| **Modificación en vivo** | Pide un cambio menor en el código: una etiqueta nueva, una regla de producción o una validación. | Sección 8 |
-| **Preguntas individuales** | Sobre la relación entre G, M y el código. | Secciones 3 a 6 y 9 |
+| **Modificación en vivo** | Pide un cambio menor en el código: una etiqueta nueva, una regla de producción o una validación. | Sección 8 y [Guía del código](Guia_del_Codigo.md) |
+| **Preguntas individuales** | Sobre la relación entre G, M y el código. | Secciones 3 a 5, 9 y [Guía del código](Guia_del_Codigo.md) |
 
-### Plan de estudio (unas 6 horas)
+### Lo que hay que cumplir además del oral
+
+- **Informe en PDF:** carátula con los integrantes, fases 1 y 2, y la explicación de por qué un autómata finito no alcanza. Sin transcribir la consigna. **Se carga en el aula virtual.**
+- **Entrevista:** la coordina el grupo con uno de los docentes.
+- **Rúbrica:** modelado formal 35 %, implementación 35 %, defensa y demostración 30 %.
+- **Para qué sirve aprobarlo (consigna y syllabus):** reemplaza al segundo parcial para la regularidad, con el primero en 4 o más y 65 % de asistencia. Para la promoción directa baja la nota mínima de los parciales de 7 a 6, con 80 % de asistencia.
+
+### Plan de estudio (unas 5 horas y media)
 
 | Etapa | Qué hacer | Tiempo | Cómo sabés que terminaste |
 |---|---|---|---|
 | 1 | Correr el programa (sección 7.1) y leer las secciones 2 y 3 | 1 h | Explicás sin leer por qué un autómata finito no alcanza. |
 | 2 | Sección 4 | 45 min | Hacés en papel el árbol y la derivación de α. |
 | 3 | Sección 5 | 1 h | Hacés en papel la traza de γ y la de una cadena inválida. |
-| 4 | Sección 6, con `parser.py` abierto al lado | 1 h 30 | Señalás la línea exacta del PUSH, del POP y de cada error. |
-| 5 | Sección 8: hacer de verdad las modificaciones | 1 h 30 | Hacés las 4 más probables sin mirar. |
+| 4 | [Guía del código](Guia_del_Codigo.md), secciones 1 a 4 | 1 h | Señalás la línea exacta donde apila, desapila y de cada error. |
+| 5 | [Guía del código](Guia_del_Codigo.md), secciones 5 a 8 | 1 h 30 | Hacés las 4 modificaciones más probables sin mirar. |
 | 6 | Sección 9 en voz alta, de a dos | 30 min | Respondés sin leer. |
 
 ---
@@ -60,7 +69,7 @@ Una cadena es válida si toda etiqueta abierta se cierra con una del mismo tipo,
 |---|---|---|
 | 1 | Gramática libre de contexto **G** | Las reglas que **generan** las cadenas válidas. |
 | 2 | Autómata a pila **M** | La máquina que **reconoce** las cadenas válidas usando una pila. |
-| 3 | Programa en Python | Implementa **G y M** (opciones A y B de la consigna) y comprueba que coinciden. |
+| 3 | Programa en Python | Simula **M** con una pila (opción B de la consigna). |
 
 **La frase que tenés que poder decir de memoria:**
 
@@ -99,7 +108,7 @@ Clasifica los lenguajes según la memoria que necesita la máquina que los recon
 
 ### 3.4 Por qué un autómata finito no alcanza
 
-Esto lo pide la consigna y está en la sección 2 del informe.
+Esto lo pide la consigna y está en la última sección del informe.
 
 **Intuición (principio del palomar).** Un autómata finito solo recuerda en qué estado está. Si tiene k estados y lee más de k etiquetas `<p>` seguidas, dos cantidades distintas de `<p>` abiertos lo dejan en el **mismo estado**. Desde ahí ya no sabe cuántos cierres faltan, así que acepta alguna cadena mal cerrada o rechaza alguna correcta.
 
@@ -113,7 +122,7 @@ Esto lo pide la consigna y está en la sección 2 del informe.
 
 Es el mismo argumento que para aⁿbⁿ y para los paréntesis balanceados.
 
-> **Importante:** esto depende de que la profundidad **no tenga límite**. Si se limita a 3 niveles, el lenguaje pasa a ser regular (ver la modificación 8.11).
+> **Importante:** esto depende de que la profundidad **no tenga límite**. Si se limita a 3 niveles, el lenguaje pasa a ser regular (ver la receta C6 de la [Guía del código](Guia_del_Codigo.md)).
 
 ### 3.5 Gramáticas
 
@@ -129,9 +138,11 @@ La regla que una gramática regular **no** puede tener es del tipo `S → a S b`
 
 ### 3.6 Autómatas a pila
 
-Es un autómata finito **más una pila**. Lee la entrada de izquierda a derecha y de la pila solo ve el **tope**. Es una 7-tupla, en el orden de la cátedra:
+Es un autómata finito **más una pila**. Lee la entrada de izquierda a derecha y de la pila solo ve el **tope**. Es una 7-tupla. La escribimos en el orden de la consigna, que es el mismo del informe:
 
-**M = (Σ, Γ, Q, q₀, Z₀, F, Δ)**
+**M = (Q, Σ, Γ, δ, q₀, Z₀, F)**
+
+En las clases aparece como `M = (Σ, Γ, Q, q₀, Z₀, F, δ)`, y para el no determinista con Δ en lugar de δ. Son los mismos 7 componentes en otro orden.
 
 | Símbolo | Qué es |
 |---|---|
@@ -141,11 +152,9 @@ Es un autómata finito **más una pila**. Lee la entrada de izquierda a derecha 
 | q₀ | estado inicial |
 | Z₀ | símbolo que está en el fondo de la pila al empezar |
 | F | estados finales |
-| Δ | función de transición |
+| δ | función de transición |
 
-> La consigna escribe `(Q, Σ, Γ, δ, q₀, Z₀, F)`. Son los mismos 7 componentes en otro orden.
-
-**Cómo se lee una transición:** `Δ(q, a, z) = (q', γ)` significa "en el estado q, leyendo a y con z en el tope, paso a q' y **reemplazo z por γ**".
+**Cómo se lee una transición:** `δ(q, a, z) = (q', γ)` significa "en el estado q, leyendo a y con z en el tope, paso a q' y **reemplazo z por γ**".
 
 | γ | Operación | Ejemplo nuestro |
 |---|---|---|
@@ -153,10 +162,10 @@ Es un autómata finito **más una pila**. Lee la entrada de izquierda a derecha 
 | `z` | **sin cambios** | leer TEXTO |
 | `λ` | **POP**: saca el tope | leer `</b>` con B en el tope |
 
-- **Bloqueo:** si no hay transición (Δ = ∅), la máquina se detiene y rechaza.
+- **Bloqueo:** si no hay transición (δ = ∅), la máquina se detiene y rechaza.
 - **Transición λ:** cambia de estado **sin leer** nada de la entrada.
 - **Determinista (AFPD):** a lo sumo una opción en cada situación y sin transiciones λ.
-- **No determinista (AFPN-λ):** puede tener varias opciones, incluidas transiciones λ. Acepta si **alguna** rama acepta.
+- **No determinista (AFPN-λ):** puede tener varias opciones, incluidas transiciones λ, así que δ devuelve un **conjunto**: `δ: Q × (Σ ∪ {λ}) × Γ → P(Q × Γ*)`. Acepta si **alguna** rama acepta.
 - A diferencia de los autómatas finitos, acá **no** son equivalentes: hay lenguajes libres de contexto que solo se reconocen con no determinismo (por ejemplo, los palíndromos pares).
 - **Configuración instantánea:** la "foto" **(q, ω, γ)**: estado, lo que falta leer y la pila con el **tope a la izquierda**. Un paso se escribe con ⊢.
 - **Aceptación por estado final, L(M):** termina de leer en un estado de F. **Es la que usamos.**
@@ -252,14 +261,14 @@ S ⇒ E S                                  (1)
 ## 5. El autómata a pila M
 
 ```
-M = (Σ, Γ, Q, q0, Z0, F, Δ)
+M = (Q, Σ, Γ, δ, q0, Z0, F)
 Σ = { <b>, <i>, <p>, </b>, </i>, </p>, TEXTO }
 Γ = { Z0, B, I, P }     B = "hay un <b> abierto", y así con los demás
 Q = { q0, qf }          q0 inicial: ahí se procesa toda la entrada
 F = { qf }              Z0 = marca del fondo de la pila
 ```
 
-| N° | Estado | Entrada | Tope | Δ(q, a, z) | Operación |
+| N° | Estado | Entrada | Tope | δ(q, a, z) | Operación |
 |:-:|:-:|:-:|:-:|:-:|:-:|
 | 1 | q0 | TEXTO | X | (q0, X) | Sin cambios |
 | 2 | q0 | `<b>` | X | (q0, B X) | Apila B |
@@ -270,7 +279,7 @@ F = { qf }              Z0 = marca del fondo de la pila
 | 7 | q0 | `</p>` | P | (q0, λ) | Desapila P |
 | 8 | q0 | **λ** | Z0 | (qf, Z0) | Acepta |
 
-X es cualquier símbolo de Γ. Cualquier otra combinación da **Δ = ∅: bloqueo y rechazo**.
+X es cualquier símbolo de Γ. Cada fila tiene una sola opción, así que `(q0, X)` abrevia el conjunto `{(q0, X)}`. Cualquier otra combinación da **δ = ∅: bloqueo y rechazo**.
 
 **En criollo:** cada vez que abro algo lo anoto arriba de la pila; cada vez que cierro, me fijo que sea lo que está arriba y lo tacho. Si al terminar solo queda Z0, está todo bien.
 
@@ -325,278 +334,44 @@ Escribí tres columnas: estado, lo que falta leer y la pila con el tope a la izq
 ⊢  (q0, <b> TEXTO </p> </b>, P Z0)      (4)
 ⊢  (q0, TEXTO </p> </b>, B P Z0)        (2)
 ⊢  (q0, </p> </b>, B P Z0)              (1)
-   Bloqueo: Δ(q0, </p>, B) = ∅          RECHAZA
+   Bloqueo: δ(q0, </p>, B) = ∅          RECHAZA
 ```
 
-Las de α y β están en el informe. **Practicalas en papel**: es muy probable que pidan una en el momento.
+Las de α, β y γ están en el informe. **Practicalas en papel**: es muy probable que pidan una en el momento.
 
 ### La tabla clave: G ↔ M ↔ código
 
 Responde a la pregunta típica de la evaluación. Conviene saberla de memoria:
 
-| Gramática G | Autómata M | Código |
+| Gramática G | Autómata M | Código (`simular`) |
 |---|---|---|
 | Terminales Σ | Alfabeto de entrada Σ | Lo que devuelve `tokenizar()` |
-| `S → E S` (hermanos) | Lecturas en q0 con la pila a la misma altura | El `for` de `simular` / el `while` de `parse_S` |
-| `E → TEXTO` | Regla 1 | `if token == "TEXTO"` / `if tok == "TEXTO"` |
-| Apertura en `E → <x> S </x>` | PUSH (reglas 2 a 4) | `pila.append(marcador)` / `pos += 1` en `parse_E` |
-| La S del medio | La pila crece | Recursión `parse_E → parse_S → parse_E` |
-| Cierre en `E → <x> S </x>` | POP si coincide (reglas 5 a 7) | `pila.pop()` / `tokens[pos] != esperado` |
-| `S → λ` | Vuelve al símbolo padre o a Z0 | `parse_S` sale del `while` |
+| `S → E S` (hermanos) | Lecturas en q0 con la pila a la misma altura | Vueltas del `for` |
+| `E → TEXTO` | Regla 1 | `if token == "TEXTO"` |
+| Apertura en `E → <x> S </x>` | Apila (reglas 2 a 4) | `pila.append(APERTURAS[token])` |
+| La S del medio | La pila crece | Tokens que se leen hasta el cierre |
+| Cierre en `E → <x> S </x>` | Desapila si coincide (reglas 5 a 7) | `tope == CIERRES[token]` y `pila.pop()` |
+| `S → λ` | Vuelve al símbolo contenedor o a Z0 | Sale del `for`, o el cierre desapila |
 | λ ∈ L(G) | `(q0, λ, Z0) ⊢ (qf, λ, Z0)` | Lista de tokens vacía: acepta |
-| Ninguna regla genera un cruce | Δ = ∅, bloqueo | `return finalizar(False, msg)` / `raise ValueError` |
-| L(G) | L(M) | `Equivalencia L(G) = L(M): VERIFICADA` |
+| Ninguna regla genera un cruce | δ vacía, bloqueo | `return False, mensaje, traza` |
 
 ---
 
-## 6. El código, parte por parte
+## 6. El código
 
-Leé esta sección con [src/parser.py](../src/parser.py) abierto. Todo el programa está en ese archivo y solo usa la biblioteca estándar de Python 3.
+El programa está en [src/parser.py](../src/parser.py), tiene unas 80 líneas y solo usa la biblioteca estándar de Python 3. Implementa la **opción B de la consigna: el simulador del autómata M**.
 
 ```
 "<p>Hola <b>mundo</b></p>"
-        │  tokenizar()                               análisis léxico
+        │  tokenizar()      análisis léxico
         ▼
 ['<p>', 'TEXTO', '<b>', 'TEXTO', '</b>', '</p>']
-        │
-        ├─► AutomataPilaMiniHTML.simular()           opción B: el autómata M
-        └─► AnalizadorRecursivoMiniHTML.validar()    opción A: la gramática G
-        │
+        │  simular()        aplica la tabla δ con una pila
         ▼
-ACEPTADA / RECHAZADA + diagnóstico + ¿coinciden?     analizar_cadena()
+ACEPTADA / RECHAZADA + mensaje + traza
 ```
 
-### 6.1 `ETIQUETAS`: la definición del lenguaje (línea 32)
-
-```python
-ETIQUETAS: Dict[str, str] = {
-    "b": "B",
-    "i": "I",
-    "p": "P",
-}
-```
-
-Es un diccionario de **etiqueta a símbolo de pila**. Es la única definición del lenguaje: M y G se arman desde acá. Por eso agregar una etiqueta es una sola línea. `Dict[str, str]` es solo una anotación de tipos, y no cambia lo que hace el programa.
-
-### 6.2 `tokenizar`: el analizador léxico (líneas 44 a 76)
-
-Convierte el texto en la lista de símbolos de Σ. Usa dos expresiones regulares:
-
-```python
-PATRON_TOKEN = re.compile(r'<[^<>]*>?|[^<]+')
-PATRON_ETIQUETA = re.compile(r'<([/\\]?)([a-zA-Z0-9]+)>')
-```
-
-**`PATRON_TOKEN`** corta la entrada en trozos. El `|` significa "o":
-
-| Parte | Significado |
-|---|---|
-| `<` | un `<` |
-| `[^<>]*` | cero o más caracteres que no sean `<` ni `>` |
-| `>?` | un `>` optativo: por eso también captura `<b` sin cerrar |
-| `[^<]+` | **o** uno o más caracteres que no sean `<`: es el texto |
-
-**`PATRON_ETIQUETA`** comprueba si un trozo es una etiqueta bien escrita:
-
-| Parte | Significado |
-|---|---|
-| `<` y `>` | los delimitadores |
-| `([/\\]?)` | grupo 1: `/` o `\` optativo (admite la notación `<\b>` de la consigna) |
-| `([a-zA-Z0-9]+)` | grupo 2: el nombre, con letras y números |
-
-```python
-def tokenizar(cadena: str) -> List[str]:
-    tokens: List[str] = []
-
-    for coincidencia in PATRON_TOKEN.finditer(cadena):   # recorre cada trozo
-        trozo = coincidencia.group().strip()             # le saca los espacios
-        if not trozo:
-            continue                                     # era solo espacio
-
-        if trozo.startswith("<"):
-            etiqueta = PATRON_ETIQUETA.fullmatch(trozo)  # ¿está bien escrita?
-            if etiqueta:
-                barra = "/" if etiqueta.group(1) else ""
-                tokens.append(f"<{barra}{etiqueta.group(2).lower()}>")  # normaliza
-            else:
-                tokens.append(trozo)                     # mal escrita: queda igual
-        else:
-            tokens.extend("TEXTO" for _ in trozo.split())  # un TEXTO por palabra
-
-    return tokens
-```
-
-(Los comentarios de la derecha son de esta guía.) Tres decisiones para saber explicar:
-
-- **Normaliza:** `<P>` y `<\p>` pasan a `<p>` y `</p>`.
-- **No descarta lo mal escrito.** Lo deja pasar tal cual para que después se rechace como error léxico. Si lo tratara como texto, aceptaría cosas como `<b`.
-- **El tokenizador no decide si una etiqueta existe.** `<u>` sale como token `<u>`, y quien lo rechaza es el analizador.
-
-Ejemplo de `<p> TEXTO <b </p>`: los trozos son `<p> `, `TEXTO `, `<b ` y `</p>`, y los tokens quedan `['<p>', 'TEXTO', '<b', '</p>']`.
-
-### 6.3 `AutomataPilaMiniHTML`: el autómata M (líneas 83 a 218)
-
-**`__init__` (línea 102)** carga la 7-tupla:
-
-```python
-self.gamma: Set[str] = {"Z0"}          # Γ
-self.sigma: Set[str] = {"TEXTO"}       # Σ
-self.estados: Set[str] = {"q0", "qf"}  # Q
-self.q0 = "q0"
-self.z0 = "Z0"
-self.f: Set[str] = {"qf"}              # F
-
-self.apertura_a_pila: Dict[str, str] = {}  # {"<b>": "B", ...}
-self.cierre_a_pila: Dict[str, str] = {}    # {"</b>": "B", ...}
-for etiqueta, simbolo in ETIQUETAS.items():
-    self.agregar_etiqueta(etiqueta, simbolo)
-```
-
-**Dato fino:** las decisiones se toman con `apertura_a_pila` y `cierre_a_pila`, que **son la tabla Δ en forma compacta**. `sigma`, `gamma`, `estados` y `f` documentan la tupla, pero `simular` no los consulta.
-
-**`agregar_etiqueta` (línea 117)** agrega `<tag>` y `</tag>` a Σ, su símbolo a Γ y sus transiciones PUSH y POP.
-
-**`simular` (línea 131)** es el corazón del proyecto:
-
-```python
-estado = self.q0
-pila = [self.z0]     # el ÚLTIMO elemento de la lista es el tope
-traza: List[str] = []
-```
-
-Adentro hay tres funciones auxiliares: `configuracion` arma el texto `(q, ω, γ)`, `registrar` agrega un paso a la traza y `finalizar` imprime la traza y devuelve el resultado. Pueden usar `estado`, `pila` y `tokens` porque están definidas adentro de `simular`.
-
-**Cada rama del `for` es un grupo de filas de la tabla Δ:**
-
-```python
-for idx, token in enumerate(tokens):     # idx = posición, token = símbolo
-    tope = pila[-1]                      # mira el tope sin sacarlo
-
-    # REGLA 1: TEXTO no toca la pila (línea 160)
-    if token == "TEXTO":
-        registrar(...)
-
-    # REGLAS 2 a 4: PUSH (línea 164)
-    elif token in self.apertura_a_pila:
-        marcador = self.apertura_a_pila[token]
-        pila.append(marcador)
-        registrar(...)
-
-    # REGLAS 5 a 7: POP si coincide (línea 170)
-    elif token in self.cierre_a_pila:
-        esperado = self.cierre_a_pila[token]
-        if tope == esperado:
-            pila.pop()
-            registrar(...)
-        else:                            # Δ = ∅
-            if tope == self.z0:
-                msg = "...sin apertura previa (pila vacía)."
-            else:
-                msg = "Error de anidamiento LIFO: ..."
-            traza.append(f"BLOQUEO: ...")
-            return finalizar(False, msg)
-
-    # Fuera de Σ (línea 185)
-    else:
-        msg = "Error léxico: ..."
-        traza.append(f"BLOQUEO: ...")
-        return finalizar(False, msg)
-```
-
-**Al terminar el `for` se aplica la regla 8 (línea 193):**
-
-```python
-if pila == [self.z0]:              # solo queda el fondo
-    estado = "qf"                  # Δ(q0, λ, Z0) = (qf, Z0)
-    registrar(...)
-    return finalizar(True, "Cadena VÁLIDA: ...")
-
-# si no, quedaron etiquetas abiertas: error "sin cerrar"
-```
-
-**Las dos funciones de abajo son de apoyo:** `_etiqueta_de` traduce un símbolo a etiqueta (`B` a `<b>`) para los mensajes, e `_imprimir_traza_consola` muestra la traza.
-
-### 6.4 `AnalizadorRecursivoMiniHTML`: la gramática G (líneas 224 a 281)
-
-Es un **analizador descendente recursivo**: **una función por cada variable** de la gramática.
-
-```python
-def validar(self, tokens):
-    pos = 0                               # próximo token a leer
-
-    def es_cierre(tok):
-        return tok.startswith("</") and tok[2:-1] in self.tags
-```
-
-`tok[2:-1]` saca el `</` del principio y el `>` del final: de `</b>` queda `b`. `nonlocal pos` permite que las funciones internas modifiquen esa variable.
-
-**`parse_S` es la variable S:**
-
-```python
-def parse_S():
-    nonlocal pos
-    while pos < len(tokens) and not es_cierre(tokens[pos]):
-        parse_E()
-```
-
-Mientras haya texto o una apertura, aplica `S → E S`. Ante un cierre o el final, sale: es `S → λ`. La recursión por derecha `S → E S` se puede escribir como un `while`, porque "un elemento seguido de más secuencia" es lo mismo que repetir elementos.
-
-**`parse_E` es la variable E:**
-
-```python
-def parse_E():
-    nonlocal pos
-    tok = tokens[pos]
-
-    if tok == "TEXTO":
-        pos += 1                          # E → TEXTO
-        return
-
-    nombre_tag = tok[1:-1]                # de "<p>" queda "p"
-    if not (tok.startswith("<") and tok.endswith(">") and nombre_tag in self.tags):
-        raise ValueError("Error léxico: ...")
-    pos += 1                              # consume la apertura
-
-    parse_S()                             # la S del medio
-
-    esperado = f"</{nombre_tag}>"
-    if pos >= len(tokens):
-        raise ValueError("...nunca fue cerrada...")
-    if tokens[pos] != esperado:
-        raise ValueError("Error de anidamiento: ...")
-    pos += 1                              # consume el cierre
-```
-
-Las últimas líneas son `E → <x> S </x>` escrita en Python: apertura, S y cierre.
-
-**Dónde está la pila acá:** en la **pila de llamadas** de Python. Cada `parse_E` abierto recuerda en `nombre_tag` qué etiqueta le falta cerrar. Es la misma idea LIFO que el autómata, pero implícita.
-
-**El cierre de `validar`:**
-
-```python
-try:
-    parse_S()
-    if pos < len(tokens):                 # sobró un cierre en el nivel de afuera
-        raise ValueError("Etiqueta de cierre ... sin apertura previa.")
-    return True, "Cadena VÁLIDA: ..."
-except ValueError as err:
-    return False, f"Error sintáctico en G: {err}"
-except RecursionError:
-    return False, "Error en G: anidamiento demasiado profundo..."
-```
-
-`raise` corta todas las llamadas recursivas de una vez hasta el `except`. `RecursionError` aparece cuando se supera el límite de llamadas de Python (ver la sección 7.3).
-
-### 6.5 La interfaz (líneas 287 a 368)
-
-- **`analizar_cadena`:** tokeniza, corre M y G, imprime ambos resultados y `VERIFICADA` o `DISCREPANCIA`.
-- **`ejecutar_casos_oficiales`:** prueba α, β, γ, λ y 4 inválidas.
-- **`modo_interactivo`:** la consola para la defensa.
-- **`if __name__ == "__main__":`** se ejecuta solo si corrés el archivo directamente, y mira los argumentos.
-
-### 6.6 Los tests (`tests/test_parser.py`)
-
-Son 14 tests con `unittest`. Cada uno pasa una cadena por `tokenizar`, `simular` y `validar`, y comprueba el resultado con `assertTrue`, `assertFalse` o `assertIn`. `setUp` crea un autómata y un analizador nuevos antes de cada test.
+**La explicación línea por línea está en la [Guía del código](Guia_del_Codigo.md).**
 
 ---
 
@@ -604,24 +379,18 @@ Son 14 tests con `unittest`. Cada uno pasa una cadena por `tokenizar`, `simular`
 
 ### 7.1 Comandos
 
-Ejecutalos **desde la carpeta raíz del repo**, porque los tests importan `src.parser`. Las **comillas son obligatorias**: sin ellas, la terminal interpreta `<` y `>` como redirecciones.
+Ejecutalos **desde la carpeta raíz del repo**. Las **comillas son obligatorias**: sin ellas, la terminal interpreta `<` y `>` como redirecciones.
 
-Casos oficiales y después modo interactivo, que es el de la defensa:
+Modo interactivo, el de la defensa:
 
 ```bash
 python3 src/parser.py
 ```
 
-Una cadena con su traza:
+Una cadena:
 
 ```bash
 python3 src/parser.py "<p> TEXTO <b> TEXTO </b> </p>"
-```
-
-Solo los casos oficiales:
-
-```bash
-python3 src/parser.py --test
 ```
 
 La cadena vacía:
@@ -630,7 +399,7 @@ La cadena vacía:
 python3 src/parser.py ""
 ```
 
-Los 14 tests:
+Los 12 tests:
 
 ```bash
 python3 -m unittest tests/test_parser.py
@@ -639,22 +408,19 @@ python3 -m unittest tests/test_parser.py
 ### 7.2 Salida real, explicada
 
 ```
-Cadena analizada: "<p> <b> TEXTO </p> </b>"
-Tokens detectados: ['<p>', '<b>', 'TEXTO', '</p>', '</b>']        ← análisis léxico
-     (q0, <p> <b> TEXTO </p> </b>, Z0)      Configuración inicial  ← traza de M
-  |- (q0, <b> TEXTO </p> </b>, P Z0)        Δ(q0, <p>, Z0) = {(q0, P Z0)}  PUSH
-  |- (q0, TEXTO </p> </b>, B P Z0)          Δ(q0, <b>, P) = {(q0, B P)}  PUSH
-  |- (q0, </p> </b>, B P Z0)                Δ(q0, TEXTO, B) = {(q0, B)}
-  BLOQUEO: Δ(q0, </p>, B) = ∅. Error de anidamiento LIFO: ...
-
-[Resultado Autómata a Pila M]: RECHAZADA (w ∉ L(M))
-[Resultado Gramática G]:      RECHAZADA (w ∉ L(G))
-[Equivalencia L(G) = L(M)]:   VERIFICADA (Ambos coinciden)        ← M y G dan lo mismo
+Tokens: ['<p>', '<b>', 'TEXTO', '</p>', '</b>']        ← análisis léxico
+(q0, <p> <b> TEXTO </p> </b>, Z0)                      ← traza de M
+⊢ (q0, <b> TEXTO </p> </b>, P Z0)                      ← apiló P
+⊢ (q0, TEXTO </p> </b>, B P Z0)                        ← apiló B
+⊢ (q0, </p> </b>, B P Z0)                              ← TEXTO: pila igual
+RECHAZADA (w ∉ L(M)). Error de anidamiento: se leyó '</p>' con B en el tope.
 ```
+
+La traza termina donde no hay transición: acá, `δ(q0, </p>, B) = ∅`.
 
 ### 7.3 Cadenas que puede probar, y qué pasa
 
-Probalas todas antes del oral. Están ejecutadas: M y G coinciden en todas.
+Probalas todas antes del oral. Están ejecutadas.
 
 | Cadena | Resultado | Por qué |
 |---|---|---|
@@ -667,8 +433,8 @@ Probalas todas antes del oral. Están ejecutadas: M y G coinciden en todas.
 | `<p> TEXTO <\p>` | ✅ | `<\p>` es la notación alternativa de cierre |
 | `a > b` | ✅ | Un `>` suelto es texto |
 | `</p>` | ❌ sintáctico | Cierre sin apertura |
-| `<p> <b> TEXTO </p> </b>` | ❌ sintáctico | Cruce |
-| `<p> TEXTO </b>` | ❌ sintáctico | Cierre de otro tipo |
+| `<p> <b> TEXTO </p> </b>` | ❌ anidamiento | Cruce |
+| `<p> TEXTO </b>` | ❌ anidamiento | Cierre de otro tipo |
 | `<p> <b> TEXTO </b>` | ❌ sintáctico | `<p>` sin cerrar |
 | `<p>>` | ❌ sintáctico | El `>` es TEXTO y `<p>` queda abierto |
 | `<u> TEXTO </u>` | ❌ léxico | `<u>` no está en Σ |
@@ -679,11 +445,7 @@ Probalas todas antes del oral. Están ejecutadas: M y G coinciden en todas.
 | `<p/>` y `<>` | ❌ léxico | No son etiquetas válidas |
 | `1 < 2` | ❌ léxico | `<` siempre inicia una etiqueta |
 
-**Tres detalles que conviene conocer antes de que te agarren:**
-
-1. **En el modo interactivo, una línea vacía no se analiza:** vuelve a pedir la cadena. Para mostrar λ usá `python3 src/parser.py ""`.
-2. **`test` y `salir` son comandos del modo interactivo**, no se analizan como texto.
-3. **Con un anidamiento de unos 500 niveles aparece `DISCREPANCIA`.** Lo comprobamos: con 495 niveles coinciden y con 500, M acepta y G informa "anidamiento demasiado profundo". No es que el lenguaje cambie: es un límite de Python, que corta la recursión en unas 1000 llamadas, y cada nivel usa dos (`parse_E` y `parse_S`). El simulador no sufre esto porque su pila es una lista.
+**En el modo interactivo, Enter sin escribir nada analiza la cadena vacía**, y `salir` termina.
 
 ### 7.4 Léxico o sintáctico
 
@@ -694,433 +456,21 @@ Probalas todas antes del oral. Están ejecutadas: M y G coinciden en todas.
 
 ## 8. Modificaciones en vivo
 
-### 8.1 El método: seis pasos, siempre iguales
+**Todo el método, las recetas y los ejercicios están en la [Guía del código](Guia_del_Codigo.md#5-cómo-pensar-cualquier-cambio).** El resumen, que se aplica siempre:
 
-La modificación evalúa si entendés la relación entre teoría y código, no solo si sabés Python. **Decí en voz alta** cada paso:
-
-1. **Repetí el pedido** y aclará los casos dudosos. Por ejemplo: "¿prohibido solo directamente adentro, o en cualquier nivel?".
+1. **Repetí el pedido** y aclará los casos dudosos.
 2. **¿Cambia Σ?** Si aparece un símbolo nuevo.
 3. **¿Cambia G?** Qué producciones se agregan o cambian.
 4. **¿Cambia M?** Qué transiciones se agregan, se sacan o si hace falta un estado.
-5. **Tocá el código en los dos analizadores:** `simular` (M) **y** `validar` (G).
+5. **Tocá el código** en `tokenizar` o en `simular`.
 6. **Probá** una cadena válida y una inválida, y corré los tests.
 
-> **Si te olvidás de cambiar uno de los dos analizadores**, el programa imprime `DISCREPANCIA`. Eso te avisa en vivo de que falta el otro.
-
-**Dónde va cada cosa en el código:**
-
-| Qué te piden | Dónde se toca |
-|---|---|
-| Una etiqueta común | `ETIQUETAS` (línea 32) |
-| Cómo se reconoce la entrada (mayúsculas, atributos, texto) | `tokenizar` y los patrones (líneas 44 a 76) |
-| Un símbolo que no toca la pila | Rama TEXTO de `simular` (160) y de `parse_E` (252) |
-| Una restricción al **abrir** una etiqueta | Antes del `pila.append` (165) y antes de consumir la apertura (259) |
-| Una restricción al **cerrar** | Rama de cierre de `simular` (171) y después de consumir la apertura en `parse_E` |
-| El criterio de aceptación | Final de `simular` (193) |
-| Un mensaje de error | El `msg` de `simular` y los `raise` de `parse_E` |
-
-**Cuando termines de practicar, volvé al código original** (esto descarta los cambios de esos dos archivos):
-
-```bash
-git checkout -- src/parser.py tests/test_parser.py
-```
-
-**Si un test falla después del cambio, no siempre es un error.** Si cambiaste el lenguaje, un test que afirmaba lo contrario *tiene* que fallar. Explicalo y actualizalo. La tabla de la sección 8.17 dice cuáles fallan en cada caso.
-
-### 8.2 Las restricciones en G: preparación común
-
-`simular` ya tiene la pila a mano, pero `parse_E` no sabe qué etiquetas están abiertas. Para las modificaciones 8.6 a 8.9 y 8.11, primero agregale esa memoria a `validar`. Son 3 líneas:
-
-```python
-# en validar(), debajo de pos = 0 (línea 236)
-abiertas: List[str] = []
-```
-
-```python
-# en parse_E(), reemplazando la llamada a parse_S() (línea 262)
-abiertas.append(nombre_tag)
-parse_S()
-abiertas.pop()
-```
-
-Ahora `abiertas` se comporta como la pila de M: `abiertas[-1]` es el tope y `"p" in abiertas` pregunta si hay un `<p>` abierto en cualquier nivel.
-
-### 8.3 Agregar una etiqueta común: `<u>` ⭐ la más probable
-
-**Σ** suma `<u>` y `</u>`. **G** suma `E → <u> S </u>`. **M** suma U a Γ, `Δ(q0, <u>, X) = (q0, U X)` y `Δ(q0, </u>, U) = (q0, λ)`.
-
-**Código:** una línea, y los dos analizadores se actualizan solos.
-
-```python
-ETIQUETAS: Dict[str, str] = {
-    "b": "B",
-    "i": "I",
-    "p": "P",
-    "u": "U",
-}
-```
-
-**Probar:** `<p> <u> TEXTO </u> </p>` es válida y `<u> </p>` no.
-
-**⚠️ Falla un test, y es correcto:** `test_etiqueta_desconocida` usa `</u>` como ejemplo de etiqueta inexistente. Explicá el motivo y cambiá `</u>` por `</x>` en ese test ([tests/test_parser.py:100](../tests/test_parser.py#L100)).
-
-**Con otros nombres:** `"h1": "H1"` funciona igual, porque el patrón admite números.
-
-**Quitar una etiqueta** es lo inverso: borrar su línea. Si sacás `i`, fallan los tests que la usan (β, γ y `test_mensaje_etiquetas_pendientes`), como corresponde.
-
-### 8.4 Etiqueta autocerrada: `<br>` ⭐
-
-No tiene cierre, así que **no toca la pila**: se comporta como TEXTO.
-
-**Σ** suma `<br>`. **G** suma `E → <br>`. **M** suma `Δ(q0, <br>, X) = (q0, X)`.
-
-**Código, 3 cambios:**
-
-```python
-# debajo de ETIQUETAS
-VACIAS: Set[str] = {"<br>"}
-```
-
-```python
-# simular(), líneas 160 y 161: se cambia la condición y TEXTO por {token} en la traza
-if token == "TEXTO" or token in VACIAS:
-    registrar("|-", idx + 1, f"Δ({estado}, {token}, {tope}) = {{({estado}, {tope})}}")
-```
-
-```python
-# parse_E(), línea 252
-if tok == "TEXTO" or tok in VACIAS:
-```
-
-**Probar:** `<p> TEXTO <br> TEXTO </p>` y `<br>` son válidas; `<p> </br> </p>` da error léxico. No falla ningún test.
-
-### 8.5 Un terminal nuevo que no es etiqueta: `NUM` ⭐
-
-Pedido: "que los números sean un token aparte".
-
-**Σ** suma `NUM`. **G** suma `E → NUM`. **M** suma `Δ(q0, NUM, X) = (q0, X)`.
-
-**Código, 4 cambios:**
-
-```python
-# tokenizar(), línea 74
-tokens.extend("NUM" if palabra.isdigit() else "TEXTO" for palabra in trozo.split())
-```
-
-```python
-# __init__ del autómata, línea 105
-self.sigma: Set[str] = {"TEXTO", "NUM"}
-```
-
-```python
-# simular(), líneas 160 y 161
-if token == "TEXTO" or token == "NUM":
-    registrar("|-", idx + 1, f"Δ({estado}, {token}, {tope}) = {{({estado}, {tope})}}")
-```
-
-```python
-# parse_E(), línea 252
-if tok == "TEXTO" or tok == "NUM":
-```
-
-**Probar:** `<p> Tengo 20 anios </p>` da los tokens `<p>`, `TEXTO`, `NUM`, `TEXTO`, `</p>`. No falla ningún test.
-
-### 8.6 Prohibir `<p>` **directamente** dentro de `<p>` ⭐
-
-Primero la preparación de 8.2.
-
-**G:** hace falta otra variable, porque el contenido de `<p>` ya no puede ser cualquier S:
-
-```
-E → TEXTO | <b> S </b> | <i> S </i> | <p> N </p>
-N → F N | λ
-F → TEXTO | <b> S </b> | <i> S </i>
-```
-
-**M:** alcanza con mirar el tope. La regla 4 deja de valer con X = P: `Δ(q0, <p>, P) = ∅`.
-
-**Código:**
-
-```python
-# simular(), antes de marcador = ... (línea 165)
-if token == "<p>" and tope == "P":
-    msg = "Error sintáctico: no se permite un <p> directamente dentro de otro <p>."
-    traza.append(f"BLOQUEO: Δ({estado}, {token}, {tope}) = ∅. {msg}")
-    return finalizar(False, msg)
-```
-
-```python
-# parse_E(), antes de pos += 1  # Consumir apertura (línea 259)
-if nombre_tag == "p" and abiertas and abiertas[-1] == "p":
-    raise ValueError("no se permite un <p> directamente dentro de otro <p>.")
-```
-
-**Probar:** `<p> <p> </p> </p>` es inválida; `<p> <b> <p> </p> </b> </p>` y `<p> </p> <p> </p>` son válidas. No falla ningún test.
-
-> **Este es el molde de cualquier restricción al abrir:** en M, un `if` antes del `marcador = ...` con el bloqueo; en G, un `if` antes de consumir la apertura con un `raise`.
-
-### 8.7 Prohibir `<p>` dentro de `<p>` **en cualquier nivel**
-
-Primero la preparación de 8.2.
-
-**G:** toda una rama nueva que no pueda generar `<p>`:
-
-```
-E → TEXTO | <b> S </b> | <i> S </i> | <p> T </p>
-T → F T | λ
-F → TEXTO | <b> T </b> | <i> T </i>
-```
-
-**M:** **mirar el tope ya no alcanza** (en `<p> <b> <p>` el tope es B). Como solo puede haber un P a la vez, alcanza con un estado nuevo que recuerde que hay un párrafo abierto: `Δ(q0, <p>, X) = (q1, P X)` y `Δ(q1, </p>, P) = (q0, λ)`. En q1 se leen TEXTO, `<b>`, `<i>` y sus cierres como en q0, y `Δ(q1, <p>, X) = ∅`. Es un buen ejemplo: **los estados también son memoria, pero finita**.
-
-**Código:** igual que 8.6, cambiando las condiciones:
-
-```python
-# simular()
-if token == "<p>" and "P" in pila:
-```
-
-```python
-# parse_E()
-if nombre_tag == "p" and "p" in abiertas:
-```
-
-En el código se usa `"P" in pila` porque es más corto que simular q1, y tiene el mismo efecto. **Aclaralo si te lo preguntan:** un autómata real solo ve el tope.
-
-**Probar:** `<p> <b> <p> </p> </b> </p>` es inválida; `<b> <p> </p> </b>` es válida. No falla ningún test.
-
-### 8.8 `<i>` solo puede contener texto
-
-Primero la preparación de 8.2.
-
-**G:** `E → ... | <i> T </i>`, con `T → TEXTO T | λ`.
-
-**M:** `Δ(q0, <x>, I) = ∅` para toda apertura.
-
-**Código:**
-
-```python
-# simular(), antes de marcador = ...
-if tope == "I":
-    msg = "Error sintáctico: <i> solo puede contener texto."
-    traza.append(f"BLOQUEO: Δ({estado}, {token}, {tope}) = ∅. {msg}")
-    return finalizar(False, msg)
-```
-
-```python
-# parse_E(), antes de consumir la apertura
-if abiertas and abiertas[-1] == "i":
-    raise ValueError("<i> solo puede contener texto.")
-```
-
-**Probar:** `<i> <b> TEXTO </b> </i>` es inválida; `<b> <i> TEXTO </i> </b>` es válida. **Falla `test_mensaje_etiquetas_pendientes`**, que anida `<b>` dentro de `<i>`: correcto, porque esa cadena ahora es inválida por otro motivo.
-
-### 8.9 Todo debe estar dentro de un `<p>`
-
-Primero la preparación de 8.2. Pedido equivalente: "no puede haber texto suelto".
-
-**G:** nuevo símbolo inicial D, y las reglas de S y E quedan igual: `D → <p> S </p> D | λ`.
-
-**M:** con Z0 en el tope solo se puede abrir `<p>`: `Δ(q0, TEXTO, Z0) = Δ(q0, <b>, Z0) = Δ(q0, <i>, Z0) = ∅`.
-
-**Código:**
-
-```python
-# simular(), debajo de tope = pila[-1] (línea 157)
-if tope == self.z0 and token != "<p>":
-    msg = "Error sintáctico: todo el contenido debe estar dentro de un <p>."
-    traza.append(f"BLOQUEO: Δ({estado}, {token}, {tope}) = ∅. {msg}")
-    return finalizar(False, msg)
-```
-
-```python
-# parse_E(), debajo de tok = tokens[pos] (línea 250)
-if not abiertas and tok != "<p>":
-    raise ValueError("todo el contenido debe estar dentro de un <p>.")
-```
-
-**Probar:** `<p> TEXTO </p>` es válida; `TEXTO` y `<b> TEXTO </b>` no. **Fallan 4 tests** (`test_cadena_gamma`, `test_texto_plano`, `test_anidamiento_profundo` y `test_etiquetas_mal_formadas`), porque usan contenido fuera de `<p>`. Es esperable. **Ojo:** γ empieza con `<p>` pero termina con `<i>` en el nivel de afuera, así que con esta regla **deja de ser válida**.
-
-### 8.10 No permitir etiquetas vacías, como `<p></p>`
-
-**G:** S se reemplaza por `E S` adentro de las etiquetas, para exigir al menos un elemento: `E → <b> E S </b> | <i> E S </i> | <p> E S </p> | TEXTO`.
-
-**M:** hace falta un estado "recién abrí", q1. Las aperturas llevan a q1, TEXTO lleva a q0, y los cierres solo se pueden leer desde q0.
-
-**Código:**
-
-```python
-# simular(), debajo de esperado = self.cierre_a_pila[token] (línea 171)
-if idx > 0 and tokens[idx - 1] == "<" + token[2:]:
-    msg = "Error sintáctico: la etiqueta no puede estar vacía."
-    traza.append(f"BLOQUEO: Δ({estado}, {token}, {tope}) = ∅. {msg}")
-    return finalizar(False, msg)
-```
-
-`"<" + token[2:]` convierte `</p>` en `<p>`, para comparar con el token anterior.
-
-```python
-# parse_E(), debajo de pos += 1  # Consumir apertura (línea 259)
-if pos < len(tokens) and tokens[pos] == f"</{nombre_tag}>":
-    raise ValueError("la etiqueta no puede estar vacía.")
-```
-
-**Probar:** `<p></p>` y `<p> <b></b> </p>` son inválidas; `<p> TEXTO </p>` y la cadena vacía son válidas. **Falla `test_anidamiento_profundo`**, cuya cadena tiene un `<b></b>` en el centro.
-
-### 8.11 Limitar la profundidad a 3 niveles
-
-Primero la preparación de 8.2. **Tiene una pregunta teórica escondida.**
-
-**G:** se necesita una familia de variables por nivel: `S₁`, `S₂`, `S₃`.
-
-**M:** se bloquea el PUSH cuando ya hay 3 símbolos arriba de Z0.
-
-**Código:**
-
-```python
-# debajo de ETIQUETAS
-MAX_PROFUNDIDAD = 3
-```
-
-```python
-# simular(), antes de marcador = ...
-if len(pila) - 1 >= MAX_PROFUNDIDAD:
-    msg = "Error sintáctico: se superó la profundidad máxima."
-    traza.append(f"BLOQUEO: Δ({estado}, {token}, {tope}) = ∅. {msg}")
-    return finalizar(False, msg)
-```
-
-`len(pila) - 1` porque Z0 no cuenta como etiqueta.
-
-```python
-# parse_E(), antes de consumir la apertura
-if len(abiertas) >= MAX_PROFUNDIDAD:
-    raise ValueError("se superó la profundidad máxima.")
-```
-
-**Probar:** `<p><b><i>TEXTO</i></b></p>` es válida; `<p><b><i><p></p></i></b></p>` no. **Falla `test_anidamiento_profundo`.**
-
-> **Lo que conviene decir sin que te lo pregunten:** con la profundidad acotada el lenguaje **pasa a ser regular**. Hay una cantidad finita de combinaciones de etiquetas abiertas (1 + 3 + 9 + 27 = 40), así que un autómata finito con un estado por combinación alcanza. La pila hacía falta justamente porque no había límite.
-
-### 8.12 Permitir atributos: `<p class="x">`
-
-**Σ, G y M no cambian.** Es un cambio **solo léxico**: el tokenizador reduce `<p class="x">` al token `<p>`. Es una muy buena observación para hacer en voz alta.
-
-**Código:** una línea, el patrón de la línea 46.
-
-```python
-PATRON_ETIQUETA = re.compile(r'<([/\\]?)([a-zA-Z0-9]+)(?:\s+[^<>]*)?>')
-```
-
-`(?:\s+[^<>]*)?` significa: opcionalmente, un espacio o más y después cualquier cosa que no sea `<` ni `>`.
-
-**Probar:** `<p class="x"> TEXTO </p>` es válida; `< b >` y `<b` siguen siendo errores. **Falla `test_etiquetas_mal_formadas`**, que usa `<p class=x>` como ejemplo de etiqueta mal formada: sacala de la lista.
-
-### 8.13 Otros cambios solo léxicos
-
-**Distinguir mayúsculas** (que `<P>` sea error léxico). En la línea 68, sacá `.lower()`:
-
-```python
-tokens.append(f"<{barra}{etiqueta.group(2)}>")
-```
-
-**Un solo TEXTO por fragmento** (que `Hola mundo` sea un token, no dos). En la línea 74:
-
-```python
-tokens.append("TEXTO")
-```
-
-Con este cambio, `<p> TEXTO TEXTO </p>` tiene un solo TEXTO y las trazas son más cortas que las del informe. Tampoco cambian G ni M, y no falla ningún test.
-
-### 8.14 Aceptar por pila vacía
-
-**G no cambia.** **M:** la regla 8 pasa a ser `Δ(q0, λ, Z0) = (q0, λ)`, que saca Z0. Ahora se acepta por N(M), y qf ya no hace falta: Q = {q0} y F = ∅.
-
-**Código, final de `simular` (líneas 193 a 195):**
-
-```python
-if pila == [self.z0]:
-    pila.pop()
-    registrar("|-", len(tokens), f"Δ(q0, λ, {self.z0}) = {{(q0, λ)}}  Aceptación por pila vacía")
-```
-
-La traza termina en `(q0, λ, )`: la pila está vacía. **Falla `test_traza_configuraciones`**, que espera ver `qf`. Sigue siendo no determinista por el mismo motivo, y el lenguaje reconocido es el mismo.
-
-### 8.15 Ajustar un mensaje de error
-
-Por ejemplo, para indicar la posición, usá `idx`, que vale desde 0:
-
-```python
-msg = f"Error sintáctico en el token {idx + 1}: Se intentó cerrar '{token}' sin apertura previa (pila vacía)."
-```
-
-Los mensajes de M están en `simular` (líneas 177, 179 y 186), y los de G en los `raise` de `parse_E` y `validar`. Si cambiás palabras como "léxico", revisá los tests que las buscan con `assertIn`.
-
-### 8.16 Documento no vacío (que λ ya no sea válida)
-
-**G:** nuevo inicial `D → E S`.
-
-**M:** un estado más, porque la regla 8 no debe poder usarse sin haber leído algo.
-
-**Código:**
-
-```python
-# simular(), debajo de registrar("", 0, "Configuración inicial") (línea 154)
-if not tokens:
-    return finalizar(False, "Error sintáctico: el documento no puede estar vacío.")
-```
-
-```python
-# validar(), primera línea adentro del try (línea 272)
-if not tokens:
-    raise ValueError("el documento no puede estar vacío.")
-```
-
-Falla `test_cadena_vacia`, como corresponde.
-
-### 8.17 Resumen: qué cambia en cada una
-
-| Modificación | ¿Cambia G? | ¿Cambia M? | Lugar | Tests que fallan |
-|---|---|---|---|---|
-| Etiqueta `<u>` | Regla nueva | PUSH y POP nuevos | `ETIQUETAS` | `test_etiqueta_desconocida` |
-| Etiqueta `<h1>` | Regla nueva | PUSH y POP nuevos | `ETIQUETAS` | Ninguno |
-| Quitar `<i>` | Saca regla | Saca reglas | `ETIQUETAS` | `test_cadena_beta`, `test_cadena_gamma`, `test_mensaje_etiquetas_pendientes` |
-| Autocerrada `<br>` | `E → <br>` | Sin cambios en la pila | Rama TEXTO | Ninguno |
-| Terminal `NUM` | `E → NUM` | Sin cambios en la pila | Tokenizador y rama TEXTO | Ninguno |
-| `<p>` directo en `<p>` | Variables nuevas | `Δ(q0,<p>,P) = ∅` | Antes del PUSH | Ninguno |
-| `<p>` en cualquier nivel | Variables nuevas | Estado nuevo | Antes del PUSH | Ninguno |
-| `<i>` solo texto | Variable nueva | `Δ(q0,<x>,I) = ∅` | Antes del PUSH | `test_mensaje_etiquetas_pendientes` |
-| Todo dentro de `<p>` | Inicial nuevo | Bloqueos con Z0 | Inicio del `for` y de `parse_E` | 4 tests (ver 8.9) |
-| Sin etiquetas vacías | `E → <x> E S </x>` | Estado nuevo | Rama de cierre | `test_anidamiento_profundo` |
-| Profundidad máxima | Variables por nivel | Bloqueo de PUSH | Antes del PUSH | `test_anidamiento_profundo` |
-| Atributos | No | No | Patrón | `test_etiquetas_mal_formadas` |
-| Mayúsculas | No | No | Tokenizador | Ninguno |
-| TEXTO por fragmento | No | No | Tokenizador | Ninguno |
-| Pila vacía | No | Regla 8 | Final de `simular` | `test_traza_configuraciones` |
-| Mensaje con posición | No | No | `msg` | Ninguno |
-| Documento no vacío | Inicial nuevo | Estado nuevo | Inicio de `simular` y `validar` | `test_cadena_vacia` |
-
-### 8.18 Si te piden agregar un test
-
-Copiá este molde adentro de la clase `TestMiniHTML`:
-
-```python
-def test_mi_caso(self):
-    tokens = tokenizar("<p> <u> TEXTO </u> </p>")
-    valida_ap, _, _ = self.ap.simular(tokens, imprimir_traza=False)
-    valida_g, _ = self.g.validar(tokens)
-    self.assertTrue(valida_ap)
-    self.assertTrue(valida_g)
-```
-
-Para una cadena inválida, cambiá `assertTrue` por `assertFalse`. Sin la modificación 8.3, este ejemplo con `<u>` falla.
-
-### 8.19 Prioridades si tenés poco tiempo
-
-1. **`<u>`** (8.3): la consigna la nombra como ejemplo.
-2. **`<br>`** (8.4): "agregar una regla de producción".
-3. **`<p>` dentro de `<p>`** (8.6): "ajustar una validación", y da el molde de cualquier restricción.
-4. **Documento dentro de `<p>`** (8.9) o **profundidad** (8.11).
+**Si tenés poco tiempo, practicá en este orden:**
+
+1. **`<u>`** (receta A1): "incorporar una nueva etiqueta" es el primer ejemplo de la consigna.
+2. **`<br>`** (B1): "agregar una regla de producción".
+3. **`<p>` dentro de `<p>`** (C1): "ajustar una validación", y da el molde de cualquier restricción.
+4. **Todo dentro de `<p>`** (D1) o **profundidad** (C6).
 
 ---
 
@@ -1136,7 +486,7 @@ Porque el orden de cierre es LIFO. Con una cola (FIFO) aceptaríamos `<p> <b> </
 El símbolo de fondo. Si está en el tope, no hay nada abierto. Sirve para aceptar (regla 8) y para detectar cierres sin apertura.
 
 **¿Estado final o pila vacía?**
-Estado final: se llega a qf y en la pila queda Z0. Para pasar a pila vacía, ver la sección 8.14.
+Estado final: se llega a qf y en la pila queda Z0. Para pasar a pila vacía, ver la receta E3 de la [Guía del código](Guia_del_Codigo.md).
 
 **¿Su autómata es determinista?**
 No, es un AFPN-λ, por la regla 8, que compite con leer cuando el tope es Z0. Es el único punto no determinista.
@@ -1157,25 +507,25 @@ Para separar secuencia de elemento. Con `S → S S` sería ambigua.
 El teorema: un lenguaje es libre de contexto si y solo si lo reconoce un autómata a pila. Concretamente, cada `E → <x> S </x>` es un PUSH al leer `<x>` y un POP al leer `</x>`, y la S del medio es la pila creciendo.
 
 **¿Implementaron la opción A o la B?**
-Las dos, y el programa compara el resultado en cada cadena.
+La opción B: el simulador del autómata a pila. Procesa los tokens en orden y usa una lista como pila, igual que la tabla δ del informe.
 
-**¿Dónde está la pila en el analizador recursivo?**
-Es la pila de llamadas de Python: cada `parse_E` que espera su cierre equivale a un símbolo en la pila.
+**¿Por qué eligieron la opción B?**
+Porque cada rama del código corresponde a filas de la tabla δ, y la pila queda a la vista. La consigna pedía una de las dos opciones.
 
-**¿Por qué `parse_S` tiene un `while` y no se llama a sí misma?**
-`S → E S` es recursión por derecha, que equivale a repetir E. Con el `while` se ahorran llamadas y se obtiene el mismo lenguaje.
+**Si no programaron G, ¿cómo se relaciona el código con la gramática?**
+G y M describen el mismo lenguaje. Cada `E → <x> S </x>` corresponde a apilar al leer `<x>` y desapilar al leer `</x>`, y la S del medio son los tokens que se leen entre ambos.
 
 **¿Qué hace el tokenizador?**
 El análisis léxico: pasa de texto a símbolos de Σ, normaliza etiquetas y convierte cada palabra en TEXTO. No decide la estructura.
 
+**La consigna toma "Error de anidamiento" como un solo TEXTO. ¿Por qué ustedes generan tres?**
+Porque cada palabra es un token, y así γ, que trae `TEXTO TEXTO`, conserva sus dos lecturas. No cambia la clasificación: `S → E S` admite cualquier cantidad de TEXTO seguidos, y la regla 1 no toca la pila.
+
 **¿Por qué mantiene las etiquetas mal formadas?**
 Para que el analizador las rechace como error léxico. Si fueran texto, se aceptarían cadenas mal escritas.
 
-**¿Por qué aparece "Error sintáctico en G: Error léxico"?**
-Es un prefijo que `validar` agrega a todos los errores de G. El tipo real es el que viene después.
-
 **¿Dónde se ve la 7-tupla en el código?**
-En `__init__` del autómata. Δ son `apertura_a_pila`, `cierre_a_pila` y las ramas de `simular`.
+Q son los textos `"q0"` y `"qf"`. Σ y Γ salen de `ETIQUETAS`, δ son `APERTURAS`, `CIERRES` y las ramas de `simular`, q0 y Z0 son la configuración inicial, y F = {qf} se ve en la regla 8.
 
 **¿Cuánto tarda?**
 La decisión es lineal: se recorre cada token una vez y cada operación de pila es de costo constante. Armar la traza de texto agrega trabajo, pero no cambia la decisión.
@@ -1198,32 +548,32 @@ G          G = (V, Σ, S, P)    V = {S, E}
            (4) E → <b> S </b>   (5) E → <i> S </i>   (6) E → <p> S </p>
            No ambigua. Apertura y cierre en la misma regla = LIFO.
 
-M          M = (Σ, Γ, Q, q0, Z0, F, Δ)     AFPN-λ por ESTADO FINAL
+M          M = (Q, Σ, Γ, δ, q0, Z0, F)     AFPN-λ por ESTADO FINAL
            Γ = {Z0,B,I,P}   Q = {q0,qf}   F = {qf}
            (1)   TEXTO, X / X        sin cambios
            (2-4) <x>,   X / Y X      PUSH
            (5-7) </x>,  Y / λ        POP
            (8)   λ,    Z0 / Z0 → qf  acepta; único no determinismo
-           Otro caso: Δ = ∅, bloqueo.
+           Otro caso: δ = ∅, bloqueo.
 
 NO REGULAR <p>ⁿ TEXTO </p>ⁿ, β = <p>ˢ, i = 0: desbalance, contradicción.
 
-CÓDIGO     ETIQUETAS :32 → tokenizar :49 → simular :131 (M) y validar :234 (G)
-           PUSH :166 · POP :173 · regla 8 :193 · parse_S :241 · parse_E :248
+CÓDIGO     ETIQUETAS :13 → tokenizar :19 → simular :35
+           apila :45 · compara :48 · desapila :49 · regla 8 :59
 
-MODIFICAR  Σ? → G? → M? → simular Y validar → probar → tests
-           Etiqueta común: una línea en ETIQUETAS.
-           Sin pila (<br>): rama TEXTO en simular (160) y en parse_E (252).
-           Restricción: if antes del PUSH (165) y antes de consumir apertura (259).
-           DISCREPANCIA = falta cambiar uno de los dos.
+MODIFICAR  Σ? → G? → M? → tokenizar o simular → probar → tests
+           Etiqueta común: una entrada en ETIQUETAS.
+           Sin pila (<br>): condición de la línea 42.
+           Restricción: if antes de apilar (45) con return False, "...", traza.
 ```
 
 ### El día de la defensa
 
 - [ ] Leer este machete.
-- [ ] Compu cargada y repo actualizado.
+- [ ] Informe cargado en el aula virtual y entrevista coordinada.
+- [ ] Compu cargada, repo actualizado y Python 3.8 o más nuevo.
 - [ ] `git status` sin cambios de prácticas en `src/parser.py` ni en los tests.
-- [ ] `python3 src/parser.py --test` y `python3 -m unittest tests/test_parser.py` andando.
+- [ ] `python3 -m unittest tests/test_parser.py` pasa los 12 tests.
 - [ ] Editor abierto en `parser.py` y una terminal en la carpeta raíz del repo.
 - [ ] Papel y lapicera para trazas y derivaciones.
 - [ ] Todos saben responder la tabla G ↔ M ↔ código: las preguntas son individuales.

@@ -25,8 +25,8 @@ $$\Sigma = \{ \lt\text{b}\gt, \lt\text{i}\gt, \lt\text{p}\gt, \lt/\text{b}\gt, \
 | Fase | Descripción | Estado | Documentación / Código |
 |:---:|:---|:---:|:---|
 | **Fase 1** | **Especificación formal de una Gramática Libre de Contexto ($G$)**<br>Definición de $G = (V, \Sigma, S, P)$, justificación teórica y árboles de derivación sintáctica (Clase 7). | ✅ Completada | [Informe técnico](entregables/Informe%20miniparser-html.pdf) |
-| **Fase 2** | **Diseño formal del Autómata a Pila ($M$)**<br>7-upla del AFPN-λ $M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \Delta)$, tabla y diagrama de transiciones, y trazas de configuración instantánea (Clase 8). | ✅ Completada | [Informe técnico](entregables/Informe%20miniparser-html.pdf) |
-| **Fase 3** | **Implementación del Analizador Sintáctico en Python**<br>Código limpio y autocontenido con simulador del AP y parser recursivo de $G$, reporte descriptivo de errores y modo interactivo. | ✅ Completada | [Informe técnico](entregables/Informe%20miniparser-html.pdf)<br>[src/parser.py](src/parser.py) |
+| **Fase 2** | **Diseño formal del Autómata a Pila ($M$)**<br>7-upla del autómata $M = (Q, \Sigma, \Gamma, \delta, q_0, Z_0, F)$, tabla y diagrama de transiciones, y trazas de configuración instantánea (Clase 8). | ✅ Completada | [Informe técnico](entregables/Informe%20miniparser-html.pdf) |
+| **Fase 3** | **Implementación del Analizador Sintáctico en Python**<br>Simulador del autómata a pila (opción B), con reporte de errores y modo interactivo. | ✅ Completada | [Informe técnico](entregables/Informe%20miniparser-html.pdf)<br>[src/parser.py](src/parser.py) |
 
 ---
 
@@ -34,10 +34,9 @@ $$\Sigma = \{ \lt\text{b}\gt, \lt\text{i}\gt, \lt\text{p}\gt, \lt/\text{b}\gt, \
 
 El proyecto utiliza únicamente la **librería estándar de Python 3** (sin dependencias externas).
 
-### 1. Ejecutar la Batería Oficial de Pruebas
-Valida las cadenas oficiales de la cátedra ($\alpha, \beta, \gamma$), la cadena vacía y casos inválidos:
+### 1. Modo Interactivo en Vivo (Para la Defensa Oral)
 ```bash
-python src/parser.py --test
+python src/parser.py
 ```
 
 ### 2. Probar una Cadena Específica con su Traza de Pila
@@ -45,13 +44,7 @@ python src/parser.py --test
 python src/parser.py "<p> TEXTO <b> TEXTO </b> </p>"
 ```
 
-### 3. Modo Interactivo en Vivo (Para la Defensa Oral)
-Inicia la consola interactiva para ingresar cadenas en tiempo real frente al docente:
-```bash
-python src/parser.py
-```
-
-### 4. Ejecutar la Suite de Pruebas Automatizadas
+### 3. Ejecutar las Pruebas Automatizadas
 ```bash
 python -m unittest tests/test_parser.py
 ```
@@ -62,10 +55,9 @@ python -m unittest tests/test_parser.py
 
 ```text
 ├── entregables/
-│   └── Informe miniparser-html.pdf  # Informe técnico (Fases 1 y 2, justificación e implementación)
+│   └── Informe miniparser-html.pdf  # Informe técnico (Fases 1 y 2, y por qué se necesita una pila)
 ├── src/
-│   ├── __init__.py                  # Exportaciones del paquete
-│   └── parser.py                    # Implementación del AFPN-λ y de G (programa de la demo)
+│   └── parser.py                    # Simulador del autómata a pila (programa de la demo)
 ├── tests/
 │   └── test_parser.py               # Suite de pruebas unitarias
 ├── interno/                         # Material de trabajo del grupo (no forma parte de la entrega)
