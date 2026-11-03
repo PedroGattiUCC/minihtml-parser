@@ -3,7 +3,7 @@
 **Materia:** Lenguajes Formales y Autómatas  
 **Carrera:** Ingeniería en Informática  
 **Institución:** Universidad Católica de Córdoba (UCC)  
-**Autor:** Pedro Gatti ([@PedroGattiUCC](https://github.com/PedroGattiUCC))
+**Integrantes:** Delfina Artigau, Facundo Grillo, Pedro Gatti y Maria Emilia Lasa
 
 ---
 
@@ -24,9 +24,9 @@ $$\Sigma = \{ \lt\text{b}\gt, \lt\text{i}\gt, \lt\text{p}\gt, \lt/\text{b}\gt, \
 
 | Fase | Descripción | Estado | Documentación / Código |
 |:---:|:---|:---:|:---|
-| **Fase 1** | **Especificación formal de una Gramática Libre de Contexto ($G$)**<br>Definición de $G = (V, \Sigma, S, P)$, justificación teórica y árboles de derivación sintáctica (Clase 7). | ✅ Completada | [docs/Fase1_Gramatica.md](docs/Fase1_Gramatica.md) |
-| **Fase 2** | **Diseño formal del Autómata a Pila ($M$)**<br>7-upla del AFPN-λ $M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \Delta)$, tabla y diagrama de transiciones, y trazas de configuración instantánea (Clase 8). | ✅ Completada | [docs/Fase2_AutomataPila.md](docs/Fase2_AutomataPila.md) |
-| **Fase 3** | **Implementación del Analizador Sintáctico en Python**<br>Código limpio y autocontenido con simulador del AP y parser recursivo de $G$, reporte descriptivo de errores y modo interactivo. | ✅ Completada | [docs/Fase3_Implementacion.md](docs/Fase3_Implementacion.md)<br>[src/parser.py](src/parser.py) |
+| **Fase 1** | **Especificación formal de una Gramática Libre de Contexto ($G$)**<br>Definición de $G = (V, \Sigma, S, P)$, justificación teórica y árboles de derivación sintáctica (Clase 7). | ✅ Completada | [Informe técnico](entregables/Informe%20miniparser-html.pdf) |
+| **Fase 2** | **Diseño formal del Autómata a Pila ($M$)**<br>7-upla del AFPN-λ $M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \Delta)$, tabla y diagrama de transiciones, y trazas de configuración instantánea (Clase 8). | ✅ Completada | [Informe técnico](entregables/Informe%20miniparser-html.pdf) |
+| **Fase 3** | **Implementación del Analizador Sintáctico en Python**<br>Código limpio y autocontenido con simulador del AP y parser recursivo de $G$, reporte descriptivo de errores y modo interactivo. | ✅ Completada | [Informe técnico](entregables/Informe%20miniparser-html.pdf)<br>[src/parser.py](src/parser.py) |
 
 ---
 
@@ -61,16 +61,13 @@ python -m unittest tests/test_parser.py
 ## 📂 Estructura del Repositorio
 
 ```text
-├── docs/
-│   ├── Fase1_Gramatica.md       # Especificación formal de la GLC y árboles de derivación
-│   ├── Fase2_AutomataPila.md    # Especificación formal del AFPN-λ M, tabla Δ y trazas
-│   ├── Fase3_Implementacion.md  # Manual técnico del parser y correspondencia teórica
-│   └── Presentaciones/          # Material de clases de la cátedra (PDFs)
+├── entregables/
+│   └── Informe miniparser-html.pdf  # Informe técnico (Fases 1 y 2, justificación e implementación)
 ├── src/
-│   ├── __init__.py              # Exportaciones del paquete
-│   └── parser.py                # Implementación completa del AFPN-λ (Clase 8) y G (Clase 7)
+│   ├── __init__.py                  # Exportaciones del paquete
+│   └── parser.py                    # Implementación del AFPN-λ y de G (programa de la demo)
 ├── tests/
-│   └── test_parser.py           # Suite de pruebas unitarias
-├── Proyecto Integrador Lenguajes.pdf # Consigna general de la cátedra
-└── README.md                    # Documentación general del repositorio
+│   └── test_parser.py               # Suite de pruebas unitarias
+├── interno/                         # Material de trabajo del grupo (no forma parte de la entrega)
+└── README.md                        # Documentación general del repositorio
 ```

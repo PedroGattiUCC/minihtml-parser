@@ -13,7 +13,7 @@ La consigna de la cátedra solicita implementar el reconocedor ejecutable en Pyt
 * **Opción B (Simulador de AP a partir de $M$ - Clase 8):** Procesamiento secuencial con estructura de datos tipo Pila (*Stack*), modelando la 7-upla $M = (\Sigma, \Gamma, Q, q_0, Z_0, F, \Delta)$.
 
 ### Diseño Limpio y sin Sobreingeniería
-Siguiendo lo visto en clase y las recomendaciones de código limpio, unificamos la implementación en un **único archivo claro y directo:** [`src/parser.py`](../src/parser.py):
+Siguiendo lo visto en clase y las recomendaciones de código limpio, unificamos la implementación en un **único archivo claro y directo:** [`src/parser.py`](../../src/parser.py):
 1. **Diccionario `ETIQUETAS`:** Única definición de las etiquetas del lenguaje (`{"b": "B", "i": "I", "p": "P"}`), de la que $M$ y $G$ construyen sus alfabetos.
 2. **Tokenizador:** Extrae las etiquetas y el texto plano mediante una expresión regular sencilla.
 3. **Clase `AutomataPilaMiniHTML` (Modelo Clase 8):** Implementa el AFPN-$\lambda$ con una lista estándar de Python como pila (`pila = ['Z0']`), ejecutando las operaciones PUSH y POP de la función $\Delta$ y emitiendo la traza de configuraciones instantáneas $(q, \omega, \gamma) \vdash (q', \omega', \gamma')$.

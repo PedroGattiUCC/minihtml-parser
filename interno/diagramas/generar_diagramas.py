@@ -3,7 +3,7 @@ Genera las imágenes del informe (árboles de derivación y diagrama del autóma
 
 Uso:
     pip install matplotlib
-    python docs/diagramas/generar_diagramas.py
+    python interno/diagramas/generar_diagramas.py
 
 Crea en esta misma carpeta:
     arbol_alfa.png   árbol de derivación de α = <p> TEXTO <b> TEXTO </b> </p>

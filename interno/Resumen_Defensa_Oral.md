@@ -2,7 +2,7 @@
 
 > Guía de estudio del grupo: primero la **teoría mínima** que hace falta (explicada desde cero), después **qué hicimos en cada fase** y **cómo está hecho el código**, y al final **las preguntas que probablemente haga el docente** y **cómo resolver la modificación en vivo**.
 >
-> Fuentes: la consigna (`Proyecto_Integrador_Lenguajes.md`), las fases (`docs/Fase1..3`), el código (`src/parser.py`) y las clases transcriptas (`docs/Presentaciones/`).
+> Fuentes: la consigna (`consigna/Proyecto_Integrador_Lenguajes.md`), las fases (`borradores/Fase1..3`), el código (`src/parser.py`) y las clases transcriptas (`Presentaciones/`).
 
 ---
 
@@ -182,7 +182,7 @@ Una **traza** es la secuencia de configuraciones desde `(q₀, w, Z₀)` hasta e
 
 ## 3. Fase 1 — La gramática G
 
-📄 Detalle completo: [Fase1_Gramatica.md](Fase1_Gramatica.md)
+📄 Detalle completo: [Fase1_Gramatica.md](borradores/Fase1_Gramatica.md)
 
 ```
 G = (V, Σ, S, P)
@@ -249,7 +249,7 @@ Tip para el oral: **cada `E` con 3 hijos es un par apertura/cierre**; cada `S` q
 
 ## 4. Fase 2 — El autómata a pila M
 
-📄 Detalle completo: [Fase2_AutomataPila.md](Fase2_AutomataPila.md)
+📄 Detalle completo: [Fase2_AutomataPila.md](borradores/Fase2_AutomataPila.md)
 
 ```
 M = (Σ, Γ, Q, q0, Z0, F, Δ)
@@ -326,7 +326,7 @@ Las trazas de β y γ están en la Fase 2 y se leen igual. **Practiquen hacer un
 
 ## 5. Fase 3 — El código
 
-📄 Detalle: [Fase3_Implementacion.md](Fase3_Implementacion.md) · Código: [src/parser.py](../src/parser.py)
+📄 Detalle: [Fase3_Implementacion.md](borradores/Fase3_Implementacion.md) · Código: [src/parser.py](../src/parser.py)
 
 La consigna pedía la opción A **o** la B. **Hicimos las dos** y el programa compara los resultados (`L(G) = L(M)`).
 
