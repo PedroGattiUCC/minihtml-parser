@@ -1,5 +1,7 @@
 # Resumen para la Defensa Oral — MiniHTML Parser
 
+> **Para preparar la defensa, estudiá la [Guía para la defensa](Guia_Defensa.md).** Este archivo queda como material de consulta.
+
 > Guía de estudio del grupo: primero la **teoría mínima** que hace falta (explicada desde cero), después **qué hicimos en cada fase** y **cómo está hecho el código**, y al final **las preguntas que probablemente haga el docente** y **cómo resolver la modificación en vivo**.
 >
 > Fuentes: la consigna (`consigna/Proyecto_Integrador_Lenguajes.md`), las fases (`borradores/Fase1..3`), el código (`src/parser.py`) y las clases transcriptas (`Presentaciones/`).

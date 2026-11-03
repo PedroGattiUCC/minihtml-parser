@@ -1,5 +1,7 @@
 # Guía de estudio para la defensa — MiniHTML Parser
 
+> **Para preparar la defensa, estudiá la [Guía para la defensa](Guia_Defensa.md).** Este archivo queda como material de consulta.
+
 Esta guía alcanza por sí sola para preparar el oral: explica la teoría desde cero, la gramática, el autómata, el código y las modificaciones en vivo, que se detallan en la [Guía del código](Guia_del_Codigo.md). Usa la misma numeración de reglas y transiciones que el [informe](../entregables/Informe%20miniparser-html.pdf), porque es lo que la profe va a tener enfrente.
 
 > **Para estudiar el código y practicar cambios en profundidad, usá la [Guía del código](Guia_del_Codigo.md).**

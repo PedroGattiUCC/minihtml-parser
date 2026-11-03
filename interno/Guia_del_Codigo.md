@@ -1,5 +1,7 @@
 # Guía del código: entenderlo y modificarlo en vivo
 
+> **Para preparar la defensa, estudiá la [Guía para la defensa](Guia_Defensa.md).** Este archivo queda como material de consulta.
+
 Esta guía tiene un solo objetivo: que puedas abrir [src/parser.py](../src/parser.py), entender cada línea y hacer **cualquier cambio que pida la profe, incluso uno que no practicaste**. La teoría completa está en la [Guía de estudio](Guia_de_Estudio.md).
 
 El programa implementa **solo la opción B de la consigna: el simulador del autómata a pila M**. La gramática G está en el informe y hay que saber explicarla, pero no está programada. Por eso **cada cambio se hace en un solo lugar**.
