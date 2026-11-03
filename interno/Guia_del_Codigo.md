@@ -18,15 +18,25 @@ El programa implementa **solo la opción B de la consigna: el simulador del aut�
 
 ## Antes de practicar: guardá una copia
 
-**No uses `git checkout` para deshacer tus pruebas.** Esta versión todavía no está commiteada, así que ese comando traería de vuelta **el código viejo** y perderías el nuevo. Recién después de commitear esta versión podés usar `git restore src/parser.py`.
+**Practicá en la rama `simplificar-parser-e-informe`.** Esta versión ya está commiteada ahí, pero **`master` tiene el código viejo** hasta que se haga el merge. Si no sabés en qué rama estás:
 
-Desde la carpeta raíz del repo, guardá una copia afuera:
+```bash
+git branch --show-current
+```
+
+Cuando termines un ejercicio, deshacé tus pruebas con este comando, que borra todo lo que no commiteaste en esos dos archivos:
+
+```bash
+git restore src/parser.py tests/test_parser.py
+```
+
+Si preferís no usar git, desde la carpeta raíz del repo guardá una copia afuera antes de empezar:
 
 ```bash
 cp src/parser.py ../parser_original.py
 ```
 
-Cuando termines un ejercicio, restaurala:
+Y restaurala al terminar:
 
 ```bash
 cp ../parser_original.py src/parser.py

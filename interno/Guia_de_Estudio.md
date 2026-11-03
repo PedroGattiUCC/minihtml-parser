@@ -108,7 +108,7 @@ Clasifica los lenguajes según la memoria que necesita la máquina que los recon
 
 ### 3.4 Por qué un autómata finito no alcanza
 
-Esto lo pide la consigna y está en la última sección del informe.
+Esto lo pide la consigna y tiene su propia sección en el informe.
 
 **Intuición (principio del palomar).** Un autómata finito solo recuerda en qué estado está. Si tiene k estados y lee más de k etiquetas `<p>` seguidas, dos cantidades distintas de `<p>` abiertos lo dejan en el **mismo estado**. Desde ahí ya no sabe cuántos cierres faltan, así que acepta alguna cadena mal cerrada o rechaza alguna correcta.
 
