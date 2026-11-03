@@ -170,29 +170,29 @@ Las otras cadenas de la consigna: **β** usa las reglas 4, 1, 2, 1, 5, 3, 1, 6, 
 
 ## 7. El código
 
-Abrí [src/parser.py](../src/parser.py). Tiene dos pasos: `tokenizar` convierte el texto en tokens de Σ y `simular` aplica δ.
+Abrí [src/parser.py](../src/parser.py). Tiene dos pasos: `tokenizar` convierte el texto en tokens de Σ y `simular` aplica δ. El archivo está comentado parte por parte y sirve de guía para exponer: los comentarios siguen la misma numeración de reglas que el informe.
 
 | Líneas | Qué hace |
 |---|---|
-| 13 | `ETIQUETAS`: cada etiqueta con su símbolo de pila. **Agregar una etiqueta es tocar solo esta línea.** |
-| 15-16 | `APERTURAS` y `CIERRES`, armados a partir de `ETIQUETAS`. |
-| 19-27 | `tokenizar`. Lo que empieza con `<` queda como etiqueta (línea 24: sin espacios en los extremos, en minúscula y con `\` pasada a `/`). Cada palabra se vuelve `TEXTO` (línea 26). Lo mal escrito queda igual, para rechazarlo después. |
-| 37 | La pila arranca con Z0. **El tope es el último elemento de la lista.** |
-| 40-54 | El recorrido, un token por vez. |
-| 59 | Regla 8: pasa a qf. |
+| 28 | `ETIQUETAS`: cada etiqueta con su símbolo de pila. **Agregar una etiqueta es tocar solo esta línea.** |
+| 33-34 | `APERTURAS` y `CIERRES`, armados a partir de `ETIQUETAS`. |
+| 39-54 | `tokenizar`. Lo que empieza con `<` queda como etiqueta (línea 50: sin espacios en los extremos, en minúscula y con `\` pasada a `/`). Cada palabra se vuelve `TEXTO` (línea 53). Lo mal escrito queda igual, para rechazarlo después. |
+| 69 | La pila arranca con Z0. **El tope es el último elemento de la lista.** |
+| 74-94 | El recorrido, un token por vez. |
+| 103 | Regla 8: pasa a qf. |
 
 **La tabla clave.** G no está programada; la relación con G es conceptual.
 
 | G | M | Código |
 |---|---|---|
-| `E → TEXTO` | Regla 1 | Líneas 42-43: no hace nada con la pila |
-| Apertura de `E → <x> S </x>` | Reglas 2 a 4 | Líneas 44-45: `pila.append` |
-| Cierre de `E → <x> S </x>` | Reglas 5 a 7 | Líneas 48-49: `pila.pop` |
-| `S → E S` | Leer un símbolo más | Línea 40: el `for` |
-| `S → λ` al final de la cadena | Regla 8 | Línea 59 |
-| Símbolo fuera de Σ | No es una entrada posible | Líneas 46-47: error léxico |
-| Sin derivación | δ = ∅ | Líneas 50-53: cierre sin apertura o cruce |
-| Falta cerrar | No se puede aplicar la regla 8 | Líneas 56-58: etiquetas sin cerrar |
+| `E → TEXTO` | Regla 1 | Líneas 76-77: no hace nada con la pila |
+| Apertura de `E → <x> S </x>` | Reglas 2 a 4 | Líneas 78-79: `pila.append` |
+| Cierre de `E → <x> S </x>` | Reglas 5 a 7 | Líneas 83-84: `pila.pop` |
+| `S → E S` | Leer un símbolo más | Línea 74: el `for` |
+| `S → λ` al final de la cadena | Regla 8 | Línea 103 |
+| Símbolo fuera de Σ | No es una entrada posible | Líneas 80-82: error léxico |
+| Sin derivación | δ = ∅ | Líneas 87-92: cierre sin apertura o cruce |
+| Falta cerrar | No se puede aplicar la regla 8 | Líneas 98-101: etiquetas sin cerrar |
 
 La S del medio de `E → <x> S </x>` es todo lo que pasa mientras el símbolo de esa etiqueta está en la pila.
 
@@ -223,7 +223,7 @@ El segundo es el modo interactivo: Enter solo analiza la cadena vacía y `salir`
 
 Por qué parecen raras algunas:
 
-- `<P>` y `<\p>` se aceptan porque la línea 24 las normaliza a `<p>` y `</p>`.
+- `<P>` y `<\p>` se aceptan porque la línea 50 las normaliza a `<p>` y `</p>`.
 - `a > b` son tres palabras: un `>` suelto no abre nada y cuenta como `TEXTO`.
 - `<p>>` es `<p>` seguido de un `TEXTO`, y falta cerrar.
 - `1 < 2` da error léxico porque `<` siempre empieza una etiqueta, y `< 2` no está en Σ.
@@ -265,18 +265,18 @@ Los números de línea son del código sin tocar. **Si un test falla porque lo q
 ### Receta 1: etiqueta nueva `<u>`
 
 ```python
-ETIQUETAS = {"b": "B", "i": "I", "p": "P", "u": "U"}   # línea 13
+ETIQUETAS = {"b": "B", "i": "I", "p": "P", "u": "U"}   # línea 28
 ```
 
 - G: `E → <u> S </u>`.
 - M: U en Γ, `δ(q0, <u>, X) = (q0, UX)` y `δ(q0, </u>, U) = (q0, λ)`.
-- Para `<h1>`, usá `"h1": "H1"`: la línea 57 arma el nombre de la etiqueta desde el símbolo, así que `"div": "D"` mostraría `<d>`.
+- Para `<h1>`, usá `"h1": "H1"`: la línea 100 arma el nombre de la etiqueta desde el símbolo, así que `"div": "D"` mostraría `<d>`.
 
 ### Receta 2: etiqueta sin cierre `<br>`
 
 ```python
-VACIAS = {"<br>"}                                       # debajo de la línea 13
-if token == "TEXTO" or token in VACIAS:                 # línea 42
+VACIAS = {"<br>"}                                       # debajo de la línea 28
+if token == "TEXTO" or token in VACIAS:                 # línea 76
 ```
 
 - G: `E → <br>`.
@@ -284,7 +284,7 @@ if token == "TEXTO" or token in VACIAS:                 # línea 42
 
 ### Receta 3: prohibir `<p>` directamente dentro de `<p>`
 
-Va entre las líneas 44 y 45:
+Va entre las líneas 78 y 79:
 
 ```python
         elif token in APERTURAS:              # reglas 2 a 4: apila
@@ -299,7 +299,7 @@ Va entre las líneas 44 y 45:
 
 ### Receta 4: todo tiene que estar dentro de `<p>`
 
-Va debajo de la línea 41:
+Va debajo de la línea 75:
 
 ```python
         if tope == "Z0" and token != "<p>":
@@ -314,11 +314,11 @@ Va debajo de la línea 41:
 
 | Pedido | Cambio | Qué pasa |
 |---|---|---|
-| Token nuevo `NUM` | Línea 26: `tokens.append("NUM" if trozo.isdigit() else "TEXTO")`. Línea 42: `if token in ("TEXTO", "NUM"):` | G: `E → NUM`. M: `δ(q0, NUM, X) = (q0, X)`. |
-| Sin texto suelto afuera | Línea 43, en lugar de `pass`: `if tope == "Z0": return False, "Error sintáctico: texto fuera de una etiqueta.", traza` | M: `δ(q0, TEXTO, Z0) = ∅`. Fallan 2 tests. |
-| Profundidad máxima | Antes de la línea 45: `if len(pila) - 1 >= MAX: return False, "Error sintáctico: demasiada profundidad.", traza`, con `MAX` definido arriba | **El lenguaje pasa a ser regular.** Con `MAX = 2` falla `test_etiquetas_sin_cerrar`, que abre tres niveles. |
-| Distinguir mayúsculas | Línea 24: sacar `.lower()` | `<P>` pasa a ser error léxico. Falla `test_html_real`, que usa `<P>`. |
-| Aceptar por pila vacía | Línea 59: `pila.pop()` y `traza.append(configuracion("q0", [], pila))` | M: `δ(q0, λ, Z0) = (q0, λ)`. Falla `test_traza`. |
+| Token nuevo `NUM` | Línea 53: `tokens.append("NUM" if trozo.isdigit() else "TEXTO")`. Línea 76: `if token in ("TEXTO", "NUM"):` | G: `E → NUM`. M: `δ(q0, NUM, X) = (q0, X)`. |
+| Sin texto suelto afuera | Línea 77, en lugar de `pass`: `if tope == "Z0": return False, "Error sintáctico: texto fuera de una etiqueta.", traza` | M: `δ(q0, TEXTO, Z0) = ∅`. Fallan 2 tests. |
+| Profundidad máxima | Antes de la línea 79: `if len(pila) - 1 >= MAX: return False, "Error sintáctico: demasiada profundidad.", traza`, con `MAX` definido arriba | **El lenguaje pasa a ser regular.** Con `MAX = 2` falla `test_etiquetas_sin_cerrar`, que abre tres niveles. |
+| Distinguir mayúsculas | Línea 50: sacar `.lower()` | `<P>` pasa a ser error léxico. Falla `test_html_real`, que usa `<P>`. |
+| Aceptar por pila vacía | Línea 103: `pila.pop()` y `traza.append(configuracion("q0", [], pila))` | M: `δ(q0, λ, Z0) = (q0, λ)`. Falla `test_traza`. |
 
 ---
 
@@ -348,7 +348,7 @@ Usamos estado final. La clase 8 muestra que en AFPNλ los dos criterios son equi
 Permite la cadena vacía y `<p></p>`, y es lo que termina una secuencia de elementos.
 
 **¿Qué pasa con la cadena vacía?**
-Es válida. En G: `S ⇒ λ`. En M: `(q0, λ, Z0) ⊢ (qf, λ, Z0)`. En el código, el `for` no da vueltas y se llega a la línea 59.
+Es válida. En G: `S ⇒ λ`. En M: `(q0, λ, Z0) ⊢ (qf, λ, Z0)`. En el código, el `for` no da vueltas y se llega a la línea 103.
 
 **¿Cómo saben que G no es ambigua?**
 Porque con el próximo símbolo hay una sola producción posible. En general, decidir si una GIC es ambigua es indecidible (clase 7), pero acá se puede ver directamente.
@@ -385,12 +385,12 @@ M:  Q = {q0, qf}   Γ = {Z0, B, I, P}   F = {qf}
     Otro caso: δ = ∅
 
 parser.py:
-    13     ETIQUETAS            44-45  apila (2 a 4)
-    22-26  tokenizar            46-47  error léxico
-    37     pila = ["Z0"]        48-49  desapila (5 a 7)
-    40     for token            50-53  cierre sin apertura o cruce
-    42-43  TEXTO (1)            56-58  sin cerrar
-                                59     regla 8
+    28     ETIQUETAS            78-79  apila (2 a 4)
+    46-53  tokenizar            80-82  error léxico
+    69     pila = ["Z0"]        83-84  desapila (5 a 7)
+    74     for token            87-92  cierre sin apertura o cruce
+    76-77  TEXTO (1)            98-101 sin cerrar
+                                103    regla 8
 
 Cambio: ¿Σ? → ¿G? → ¿M? → código → válida, inválida y tests
 ```
