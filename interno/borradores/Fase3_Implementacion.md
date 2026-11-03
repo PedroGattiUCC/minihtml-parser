@@ -1,6 +1,6 @@
 # Fase 3: Implementación del analizador sintáctico
 
-Elegimos la **opción B de la consigna: el simulador del autómata a pila M**. El programa está en [`src/parser.py`](../../src/parser.py), en Python 3 y sin dependencias externas. La explicación completa está en la [Guía del código](../Guia_del_Codigo.md).
+Elegimos la **opción B de la consigna: el simulador del autómata a pila M**. El programa está en [`src/parser.py`](../../src/parser.py), en Python 3 y sin dependencias externas. La explicación para la defensa está en la [Guía para la defensa](../Guia_Defensa.md).
 
 ## Partes del programa
 

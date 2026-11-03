@@ -413,7 +413,3 @@ Cambio: ¿Σ? → ¿G? → ¿M? → código → válida, inválida y tests
 | 4 | Código, demo y modificación | 7 a 9 |
 
 Todos tienen que poder responder la sección 10 y la tabla de la sección 7.
-
----
-
-*¿Querés más detalle? La [Guía del código](Guia_del_Codigo.md) explica cada línea y trae más recetas, y la [Guía de estudio](Guia_de_Estudio.md) desarrolla la teoría.*
